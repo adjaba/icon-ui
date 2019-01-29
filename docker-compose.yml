@@ -1,0 +1,8 @@
+version: "3.3"
+services:
+  server:
+    build: .
+    image: imslavko/ocr-ui:latest
+    user: ${CURRENT_UID}
+    ports:
+      - "5000:3000"
