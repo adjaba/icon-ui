@@ -263,10 +263,10 @@ class App extends Component {
         >
           <div style={{ padding: 10, flex: '0 0 auto' }}>
             <img style={stretchStyle} src={fakeData[15]} />
-            <div style={{ display: 'flex', marginTop: 10 }}>
-              <Button style={{ flex: 1 }}>Remove</Button>
-              <Button style={{ flex: 1 }}>Add</Button>
-            </div>
+          </div>
+          <div style={{ display: 'flex', marginTop: 10 }}>
+            <Button style={{ flex: 1 }}>Remove</Button>
+            <Button style={{ flex: 1 }}>Add</Button>
           </div>
           <div
             style={{
