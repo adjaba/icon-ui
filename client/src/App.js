@@ -5,7 +5,7 @@ import {
   List,
   Checkbox,
   Input,
-  Select,
+  Select as BasicSelect,
   Loader,
   Progress,
 } from 'semantic-ui-react';
@@ -13,6 +13,7 @@ import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
 
 import update from 'immutability-helper';
+import Select from 'react-select';
 
 const sectionStyle = {
   flex: 1,
@@ -44,6 +45,17 @@ const ocrEngineOptions = [
   {
     value: 'https://b.com',
     text: 'model B',
+  },
+];
+
+const textureOptions = [
+  {
+    value: 'textureA',
+    label: 'paper',
+  },
+  {
+    value: 'textureB',
+    label: 'metal',
   },
 ];
 
@@ -219,13 +231,22 @@ class App extends Component {
             </div>
             <div style={{ flex: 1 }}>
               <Header as="h4">Translation Model</Header>
-              <Select options={['modelA', 'modelB']} />
+              <BasicSelect options={['modelA', 'modelB']} />
               <Header as="h4">Texture Transfer</Header>
-              <Select options={['textureA', 'textureB']} />
+              <Select
+                defaultValue={[]}
+                isMulti
+                name="textures"
+                options={textureOptions}
+                className="basic-multi-select"
+                classNamePrefix="select"
+                placeholder="Select texture/s"
+                closeMenuOnSelect={false}
+              />
             </div>
             <div style={{ flex: 1 }}>
               <Header as="h4">Style Transfer</Header>
-              <Select options={['modelA', 'modelB']} />
+              <BasicSelect options={['modelA', 'modelB']} />
               <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
@@ -239,7 +260,7 @@ class App extends Component {
                 style={{ marginBottom: '10px' }}
               />
               <Checkbox label="Resize generated sample" />
-              <Select
+              <BasicSelect
                 style={{ marginTop: 10 }}
                 options={['textureA', 'textureB']}
               />
