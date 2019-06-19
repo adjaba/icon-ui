@@ -59,6 +59,12 @@ const textureOptions = [
   },
 ];
 
+const controlColumnStyle = {
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+};
 const fakeData = [
   'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/6/6b/Acid_Spray_icon.png/120px-Acid_Spray_icon.png?version=d6e54c5791d2eaf135d30dd6796fa0c4',
   'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/7/77/Activate_Fire_Remnant_icon.png/120px-Activate_Fire_Remnant_icon.png?version=d1cd7729ceec7e99160ada0bb6f28f02',
@@ -220,46 +226,61 @@ class App extends Component {
           }}
         >
           <div style={{ flex: 1, display: 'flex', padding: 10 }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                flexGrow: 0,
+                flexShrink: 1,
+                flexBasis: 'auto',
+                width: '200px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
               <Header as="h4">Number of Samples</Header>
               <Input
-                style={{ maxWidth: 200, marginBottom: 10 }}
+                style={{ maxWidth: 100, marginBottom: 10 }}
                 type="number"
               />
               <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
               <Checkbox label="Sort by color" />
             </div>
-            <div style={{ flex: 1 }}>
-              <Header as="h4">Translation Model</Header>
-              <BasicSelect options={['modelA', 'modelB']} />
+            <div style={controlColumnStyle}>
+              {/* <Header as="h4">Translation Model</Header>
+              <BasicSelect options={['modelA', 'modelB']} /> */}
               <Header as="h4">Texture Transfer</Header>
-              <Select
-                defaultValue={[]}
-                isMulti
-                name="textures"
-                options={textureOptions}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                placeholder="Select texture/s"
-                closeMenuOnSelect={false}
-              />
+              <div style={{ minWidth: '200px' }}>
+                <Select
+                  defaultValue={[]}
+                  isMulti
+                  name="textures"
+                  options={textureOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  placeholder="Select texture/s"
+                  closeMenuOnSelect={false}
+                  styles={{ display: 'flex', minWidth: '150px' }}
+                />
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <Header as="h4">Style Transfer</Header>
+            <div style={controlColumnStyle}>
+              <Header as="h4"> Style Transfer</Header>
               <BasicSelect options={['modelA', 'modelB']} />
-              <Header as="h4">Style Parameter</Header>
+              {/* <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
                 settings={{ start: 0, min: 0, max: 10, step: 1 }}
-              />
+              /> */}
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={controlColumnStyle}>
               <Header as="h4">Post Processing</Header>
-              <Checkbox
-                label="Apply alpha channel"
-                style={{ marginBottom: '10px' }}
-              />
-              <Checkbox label="Resize generated sample" />
+              <div style={{ marginLeft: '10px' }}>
+                <Checkbox
+                  label="Apply alpha channel"
+                  style={{ marginBottom: '10px' }}
+                />
+                <Checkbox label="Resize generated sample" />
+              </div>
               <BasicSelect
                 style={{ marginTop: 10 }}
                 options={['textureA', 'textureB']}
@@ -269,7 +290,7 @@ class App extends Component {
           <div style={{ flex: 1 }}>
             <Header as="h5">Progress Status </Header>
             <div style={{ marginBottom: '-20px' }}>
-              <Progress percent={50} indicating />
+              <Progress percent={50} progress />
             </div>
           </div>
         </div>
