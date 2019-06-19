@@ -7,6 +7,7 @@ import {
   Input,
   Select,
   Loader,
+  Progress,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -182,48 +183,73 @@ class App extends Component {
         <div
           style={{
             flex: '0 0 auto',
-            width: 150,
+            width: 191.8,
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'space-around',
           }}
         >
-          <div style={{ height: 150, width: 150, padding: 10 }}>
+          <div style={{ height: 191.8, width: 191.8, padding: 10 }}>
             <img style={stretchStyle} src={fakeData[2]} />
           </div>
-          <Button primary style={{ margin: '0 10px' }}>
+          <Button
+            primary
+            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+          >
             Generate
           </Button>
         </div>
-        <div style={{ flex: 1, display: 'flex', padding: 10 }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <Header as="h4">Number of Samples</Header>
-            <Input style={{ maxWidth: 200, marginBottom: 10 }} type="number" />
-            <Checkbox label="Keep history" />
-            <Checkbox label="Sort by color" />
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            padding: 10,
+            flexDirection: 'column',
+          }}
+        >
+          <div style={{ flex: 1, display: 'flex', padding: 10 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <Header as="h4">Number of Samples</Header>
+              <Input
+                style={{ maxWidth: 200, marginBottom: 10 }}
+                type="number"
+              />
+              <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
+              <Checkbox label="Sort by color" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Header as="h4">Translation Model</Header>
+              <Select options={['modelA', 'modelB']} />
+              <Header as="h4">Texture Transfer</Header>
+              <Select options={['textureA', 'textureB']} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Header as="h4">Style Transfer</Header>
+              <Select options={['modelA', 'modelB']} />
+              <Header as="h4">Style Parameter</Header>
+              <Slider
+                color="blue"
+                settings={{ start: 0, min: 0, max: 10, step: 1 }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <Header as="h4">Post Processing</Header>
+              <Checkbox
+                label="Apply alpha channel"
+                style={{ marginBottom: '10px' }}
+              />
+              <Checkbox label="Resize generated sample" />
+              <Select
+                style={{ marginTop: 10 }}
+                options={['textureA', 'textureB']}
+              />
+            </div>
           </div>
           <div style={{ flex: 1 }}>
-            <Header as="h4">Translation Model</Header>
-            <Select options={['modelA', 'modelB']} />
-            <Header as="h4">Texture Transfer</Header>
-            <Select options={['textureA', 'textureB']} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <Header as="h4">Style Transfer</Header>
-            <Select options={['modelA', 'modelB']} />
-            <Header as="h4">Style Parameter</Header>
-            <Slider
-              color="blue"
-              settings={{ start: 0, min: 0, max: 10, step: 1 }}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <Header as="h4">Post Processing</Header>
-            <Checkbox label="Apply alpha channel" />
-            <Checkbox label="Resize generated sample" />
-            <Select
-              style={{ marginTop: 10 }}
-              options={['textureA', 'textureB']}
-            />
+            <Header as="h5">Progress Status </Header>
+            <div style={{ marginBottom: '-20px' }}>
+              <Progress percent={50} indicating />
+            </div>
           </div>
         </div>
       </div>
