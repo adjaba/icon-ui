@@ -145,6 +145,7 @@ class App extends Component {
     this.loadFakeData = this.loadFakeData.bind(this);
     this.addToList = this.addToList.bind(this);
     this.removeFromList = this.removeFromList.bind(this);
+    this.clearList = this.clearList.bind(this);
   }
 
   loadFakeData() {
@@ -236,6 +237,12 @@ class App extends Component {
         myList: myList,
       });
     }
+  }
+
+  clearList() {
+    this.setState({
+      myList: [],
+    });
   }
   // onImageFocus(e){
   //   console.log(e);
@@ -446,7 +453,14 @@ class App extends Component {
             {this.renderListItems()}
           </div>
           <div style={{ display: 'flex', flex: '0 0 auto' }}>
-            <Button style={{ flex: 1 }}>Clear list</Button>
+            <Button
+              style={{ flex: 1 }}
+              onClick={() => {
+                this.clearList();
+              }}
+            >
+              Clear list
+            </Button>
             <Button style={{ flex: 1 }}>Save list</Button>
           </div>
         </div>
