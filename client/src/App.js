@@ -93,6 +93,8 @@ const fakeData = [
   'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/0/09/Astral_Imprisonment_icon.png/120px-Astral_Imprisonment_icon.png?version=6b00df85d6ba518740b43c1ac077b87f',
 ];
 
+const nullImg = require('./images/null.JPG');
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -133,6 +135,8 @@ class App extends Component {
         boundingBox: [],
         text_string: '',
       },
+
+      currentImgSrc: nullImg,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -175,6 +179,7 @@ class App extends Component {
   }
 
   onImage(e) {
+    console.log('onImage');
     const url = URL.createObjectURL(e.target.files[0]);
     const img = new Image();
     img.onload = () => {
@@ -195,6 +200,13 @@ class App extends Component {
     img.src = url;
   }
 
+  onImageClick(e) {
+    this.setState({
+      currentImgSrc: e.target.src ? e.target.src : nullImg,
+    });
+    // e.target.focus();
+  }
+
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -207,10 +219,32 @@ class App extends Component {
             justifyContent: 'space-around',
           }}
         >
-          <div style={{ height: 191.8, width: 191.8, padding: 10 }}>
+          {/* <Button
+            content="Choose File"
+            labelPosition="left"
+            icon="file"
+            onClick={() => this.fileInputRef.current.click()}
+          />
+          <input
+            ref={this.fileInputRef}
+            type="file"
+            hidden
+            onChange={this.fileChange}
+          />
+          <Button
+            primary
+            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+          >
+            Load image
+          </Button> */}
+          <div
+            style={{ height: 191.8, width: 191.8, padding: 10 }}
+            id={'temp-canvas'}
+          >
             <img style={stretchStyle} src={fakeData[2]} />
           </div>
           <Button
+            type="submit"
             primary
             style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
           >
@@ -301,7 +335,10 @@ class App extends Component {
   renderListItems() {
     const size = 75;
     return fakeData.map(url => (
-      <div style={{ width: size, height: size, padding: 5 }}>
+      <div
+        style={{ width: size, height: size, padding: 5 }}
+        onClick={e => this.onImageClick(e)}
+      >
         <img style={stretchStyle} src={url} key={url} />
       </div>
     ));
@@ -310,7 +347,10 @@ class App extends Component {
   renderGridItems() {
     const size = 150;
     return fakeData.map(url => (
-      <div style={{ width: size, height: size, padding: 5 }}>
+      <div
+        style={{ width: size, height: size, padding: 5 }}
+        onClick={e => this.onImageClick(e)}
+      >
         <img style={stretchStyle} src={url} key={url} />
       </div>
     ));
@@ -330,7 +370,7 @@ class App extends Component {
           }}
         >
           <div style={{ padding: 10, flex: '0 0 auto' }}>
-            <img style={stretchStyle} src={fakeData[15]} />
+            <img style={stretchStyle} src={this.state.currentImgSrc} />
           </div>
           <div style={{ display: 'flex', marginTop: 10 }}>
             <Button style={{ flex: 1 }}>Remove</Button>
