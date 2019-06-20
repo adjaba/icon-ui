@@ -137,11 +137,14 @@ class App extends Component {
       },
 
       currentImgSrc: nullImg,
+      myList: [],
     };
 
     this.onImage = this.onImage.bind(this);
     this.loadData = this.loadData.bind(this);
     this.loadFakeData = this.loadFakeData.bind(this);
+    this.addToList = this.addToList.bind(this);
+    this.removeFromList = this.removeFromList.bind(this);
   }
 
   loadFakeData() {
@@ -204,9 +207,40 @@ class App extends Component {
     this.setState({
       currentImgSrc: e.target.src ? e.target.src : nullImg,
     });
-    // e.target.focus();
   }
 
+  addToList() {
+    const myList = this.state.myList;
+    const currentImgSrc = this.state.currentImgSrc;
+    const position = myList.indexOf(currentImgSrc);
+
+    if (position < 0) {
+      this.setState({
+        myList: myList.concat(currentImgSrc),
+      });
+    } else {
+      alert('Image already added');
+    }
+  }
+
+  removeFromList() {
+    const myList = this.state.myList;
+    const currentImgSrc = this.state.currentImgSrc;
+    const position = myList.indexOf(currentImgSrc);
+
+    if (position < 0) {
+      alert('Image not in list');
+    } else {
+      myList.splice(position, 1);
+      this.setState({
+        myList: myList,
+      });
+    }
+  }
+  // onImageFocus(e){
+  //   console.log(e);
+  //   console.log('hi');
+  // }
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -334,7 +368,7 @@ class App extends Component {
 
   renderListItems() {
     const size = 75;
-    return fakeData.map(url => (
+    return this.state.myList.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
@@ -350,8 +384,18 @@ class App extends Component {
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
+        onFocus={() => console.log('hi')}
       >
-        <img style={stretchStyle} src={url} key={url} />
+        <img
+          style={stretchStyle}
+          src={url}
+          key={url}
+          id={url}
+          alt={''}
+          onFocus={() => {
+            console.log('hi');
+          }}
+        />
       </div>
     ));
   }
@@ -373,8 +417,22 @@ class App extends Component {
             <img style={stretchStyle} src={this.state.currentImgSrc} />
           </div>
           <div style={{ display: 'flex', marginTop: 10 }}>
-            <Button style={{ flex: 1 }}>Remove</Button>
-            <Button style={{ flex: 1 }}>Add</Button>
+            <Button
+              style={{ flex: 1 }}
+              onClick={() => {
+                this.removeFromList();
+              }}
+            >
+              Remove
+            </Button>
+            <Button
+              style={{ flex: 1 }}
+              onClick={() => {
+                this.addToList();
+              }}
+            >
+              Add
+            </Button>
           </div>
           <div
             style={{
