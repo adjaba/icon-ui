@@ -61,14 +61,31 @@ const textureOptions = [
 
 const styleOptions = [
   {
-    key: 0,
     value: 0,
     text: 'No Style Transfer',
   },
   {
-    key: 1,
     value: 1,
     text: 'Game Style Transfer',
+  },
+];
+
+const resizingOptions = [
+  {
+    value: 'nn',
+    text: 'Nearest-neighbor',
+  },
+  {
+    value: 'bl',
+    text: 'Bilinear',
+  },
+  {
+    value: 'lc',
+    text: 'Lancoz',
+  },
+  {
+    value: 'sr',
+    text: 'Super-resolution',
   },
 ];
 const controlColumnStyle = {
@@ -150,6 +167,7 @@ class App extends Component {
 
       currentImgSrc: nullImg,
       myList: [],
+      resize: false,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -159,6 +177,7 @@ class App extends Component {
     this.removeFromList = this.removeFromList.bind(this);
     this.clearList = this.clearList.bind(this);
     this.saveList = this.saveList.bind(this);
+    this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
   }
 
   loadFakeData() {
@@ -221,6 +240,7 @@ class App extends Component {
     this.setState({
       currentImgSrc: e.target.src ? e.target.src : nullImg,
     });
+    console.log(this.state);
   }
 
   addToList() {
@@ -263,6 +283,11 @@ class App extends Component {
   //   console.log(e);
   //   console.log('hi');
   // }
+  toggleResizeSelect(e) {
+    this.setState({
+      resize: !this.state.resize,
+    });
+  }
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -352,7 +377,7 @@ class App extends Component {
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4"> Style Transfer</Header>
-              <Select options={styleOptions} default={styleOptions[0]} />
+              <Select options={styleOptions} defaultValue={0} />
               {/* <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
@@ -366,11 +391,18 @@ class App extends Component {
                   label="Apply alpha channel"
                   style={{ marginBottom: '10px' }}
                 />
-                <Checkbox label="Resize generated sample" />
+                <Checkbox
+                  label="Resize generated sample"
+                  onChange={e => {
+                    this.toggleResizeSelect(e);
+                  }}
+                />
               </div>
               <Select
                 style={{ marginTop: 10 }}
-                options={['textureA', 'textureB']}
+                disabled={!this.state.resize}
+                options={resizingOptions}
+                onClick={() => console.log(this.state)}
               />
             </div>
           </div>
