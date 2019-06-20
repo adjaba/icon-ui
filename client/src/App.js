@@ -10,7 +10,6 @@ import {
   Loader,
   Progress,
   Icon,
-  Segment,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -126,6 +125,15 @@ const fakeData = [
 
 const nullImg = require('./images/null.JPG');
 
+var fileInputs = {
+  URL: 1,
+  image: 2,
+  properties: {
+    1: { name: 'url', placeholder: 'Enter URL' },
+    2: { name: 'file', accept: 'image/x-png,image/gif,image/jpeg' },
+  },
+};
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -170,6 +178,7 @@ class App extends Component {
       currentImgSrc: nullImg,
       myList: [],
       resize: false,
+      mode: null,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -180,6 +189,7 @@ class App extends Component {
     this.clearList = this.clearList.bind(this);
     this.saveList = this.saveList.bind(this);
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
+    this.fileChange = this.fileChange.bind(this);
   }
 
   loadFakeData() {
@@ -289,8 +299,12 @@ class App extends Component {
     this.setState({
       resize: !this.state.resize,
     });
+    console.log(this.state);
   }
 
+  fileChange() {
+    console.log('file changed?');
+  }
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -323,15 +337,30 @@ class App extends Component {
             size="small"
             style={{ margin: '10px 10px', maxHeight: '50px', flex: 1 }}
           >
-            <Button>
+            <Button
+              onClick={() => {
+                this.setState({ mode: fileInputs.properties[1].name });
+              }}
+            >
               <Icon name="linkify" />
               URL
             </Button>
             <Button.Or />
-            <Button>
+            <Button
+              onClick={() => {
+                this.setState({ mode: fileInputs.properties[2].name });
+              }}
+            >
               <Icon name="upload" />
+              {/* // onClick={() => this.refs.fileInputRef.click()}/> */}
               Disk
             </Button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              hidden
+              onChange={this.fileChange}
+            />
           </Button.Group>
           <div
             style={{ height: 191.8, width: 191.8, padding: 10 }}
@@ -355,18 +384,31 @@ class App extends Component {
             flexDirection: 'column',
           }}
         >
-          <Segment
-            primary
+          <Input
+            icon="search"
             style={{
               flex: 1,
               maxHeight: '36px',
               display: 'flex',
               alignItems: 'center',
             }}
+            placeholder={fileInputs.properties[1].placeholder}
+            type={this.state.mode}
+            disabled={this.state.mode ? false : true}
+          />
+
+          {/* <input
+            style={{
+              flex: 1,
+              maxHeight: '36px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            placeholder="Click on an input mode to the left"
+            type= {this.state.mode}
+            disabled = {this.state.mode ? false: true}
           >
-            {' '}
-            Local path, URL{' '}
-          </Segment>
+          </input> */}
           <div style={{ flex: 1, display: 'flex', padding: 10 }}>
             <div
               style={{
