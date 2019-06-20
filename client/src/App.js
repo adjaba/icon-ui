@@ -240,7 +240,6 @@ class App extends Component {
     this.setState({
       currentImgSrc: e.target.src ? e.target.src : nullImg,
     });
-    console.log(this.state);
   }
 
   addToList() {
