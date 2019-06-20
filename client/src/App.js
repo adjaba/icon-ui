@@ -9,6 +9,7 @@ import {
   Select,
   Loader,
   Progress,
+  Icon,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -282,11 +283,13 @@ class App extends Component {
   //   console.log(e);
   //   console.log('hi');
   // }
+
   toggleResizeSelect(e) {
     this.setState({
       resize: !this.state.resize,
     });
   }
+
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -310,13 +313,25 @@ class App extends Component {
             type="file"
             hidden
             onChange={this.fileChange}
-          />
-          <Button
-            primary
+          /> */}
+          {/* <Button
+            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+          > Load Image
+          </Button> */}
+          <Button.Group
+            size="small"
             style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
           >
-            Load image
-          </Button> */}
+            <Button>
+              <Icon name="linkify" />
+              URL
+            </Button>
+            <Button.Or />
+            <Button>
+              <Icon name="upload" />
+              Disk
+            </Button>
+          </Button.Group>
           <div
             style={{ height: 191.8, width: 191.8, padding: 10 }}
             id={'temp-canvas'}
