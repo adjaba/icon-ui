@@ -175,7 +175,8 @@ class App extends Component {
         text_string: '',
       },
 
-      currentImgSrc: nullImg,
+      currentImgSrc: null,
+      imgSrc: null,
       myList: [],
       resize: false,
       mode: null,
@@ -302,7 +303,10 @@ class App extends Component {
   }
 
   fileChange() {
-    console.log('file changed?');
+    if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
+      console.log('you uploaded a url');
+      console.log(this.state);
+    }
   }
   renderControls() {
     return (
@@ -316,22 +320,6 @@ class App extends Component {
             justifyContent: 'space-around',
           }}
         >
-          {/* <Button
-            content="Choose File"
-            labelPosition="left"
-            icon="file"
-            onClick={() => this.fileInputRef.current.click()}
-          />
-          <input
-            ref={this.fileInputRef}
-            type="file"
-            hidden
-            onChange={this.fileChange}
-          /> */}
-          {/* <Button
-            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
-          > Load Image
-          </Button> */}
           <Button.Group
             size="small"
             style={{ margin: '10px 10px', maxHeight: '50px', flex: 1 }}
@@ -365,7 +353,10 @@ class App extends Component {
             style={{ height: 191.8, width: 191.8, padding: 10 }}
             id={'temp-canvas'}
           >
-            <img style={stretchStyle} src={fakeData[2]} />
+            <img
+              style={stretchStyle}
+              src={this.state.imgSrc ? this.state.imgSrc : nullImg}
+            />
           </div>
           <Button
             type="submit"
@@ -384,16 +375,27 @@ class App extends Component {
           }}
         >
           <Input
-            icon="search"
+            action={{
+              color: 'blue',
+              labelPosition: 'left',
+              icon: 'image',
+              content: 'Load Image',
+            }}
+            actionPosition="right"
             style={{
               flex: 1,
               maxHeight: '36px',
               display: 'flex',
               alignItems: 'center',
             }}
-            placeholder={fileInputs.properties[1].placeholder}
-            type={this.state.mode}
-            disabled={this.state.mode ? false : true}
+            placeholder={
+              this.state.mode
+                ? fileInputs.properties[1].placeholder
+                : 'Choose an input mode to the left'
+            }
+            type={this.state.mode || 'text'}
+            disabled={!this.state.mode}
+            onChange={() => this.fileChange()}
           />
 
           {/* <input
@@ -533,7 +535,12 @@ class App extends Component {
           }}
         >
           <div style={{ padding: 10, flex: '0 0 auto' }}>
-            <img style={stretchStyle} src={this.state.currentImgSrc} />
+            <img
+              style={stretchStyle}
+              src={
+                this.state.currentImgSrc ? this.state.currentImgSrc : nullImg
+              }
+            />
           </div>
           <div style={{ display: 'flex', marginTop: 10 }}>
             <Button
