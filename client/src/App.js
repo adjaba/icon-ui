@@ -299,7 +299,6 @@ class App extends Component {
     this.setState({
       resize: !this.state.resize,
     });
-    console.log(this.state);
   }
 
   fileChange() {
