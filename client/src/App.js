@@ -10,6 +10,7 @@ import {
   Loader,
   Progress,
   Icon,
+  Segment,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -320,7 +321,7 @@ class App extends Component {
           </Button> */}
           <Button.Group
             size="small"
-            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+            style={{ margin: '10px 10px', maxHeight: '50px', flex: 1 }}
           >
             <Button>
               <Icon name="linkify" />
@@ -354,6 +355,18 @@ class App extends Component {
             flexDirection: 'column',
           }}
         >
+          <Segment
+            primary
+            style={{
+              flex: 1,
+              maxHeight: '36px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            {' '}
+            Local path, URL{' '}
+          </Segment>
           <div style={{ flex: 1, display: 'flex', padding: 10 }}>
             <div
               style={{
