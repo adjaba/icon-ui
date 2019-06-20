@@ -59,6 +59,18 @@ const textureOptions = [
   },
 ];
 
+const styleOptions = [
+  {
+    key: 0,
+    value: 0,
+    text: 'No Style Transfer',
+  },
+  {
+    key: 1,
+    value: 1,
+    text: 'Game Style Transfer',
+  },
+];
 const controlColumnStyle = {
   flex: 1,
   display: 'flex',
@@ -146,6 +158,7 @@ class App extends Component {
     this.addToList = this.addToList.bind(this);
     this.removeFromList = this.removeFromList.bind(this);
     this.clearList = this.clearList.bind(this);
+    this.saveList = this.saveList.bind(this);
   }
 
   loadFakeData() {
@@ -244,6 +257,8 @@ class App extends Component {
       myList: [],
     });
   }
+
+  saveList() {}
   // onImageFocus(e){
   //   console.log(e);
   //   console.log('hi');
@@ -316,6 +331,8 @@ class App extends Component {
               <Input
                 style={{ maxWidth: 100, marginBottom: 10 }}
                 type="number"
+                max="100"
+                min="0"
               />
               <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
               <Checkbox label="Sort by color" />
@@ -340,7 +357,7 @@ class App extends Component {
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4"> Style Transfer</Header>
-              <BasicSelect options={['modelA', 'modelB']} />
+              <BasicSelect options={styleOptions} default={styleOptions[0]} />
               {/* <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
@@ -453,15 +470,13 @@ class App extends Component {
             {this.renderListItems()}
           </div>
           <div style={{ display: 'flex', flex: '0 0 auto' }}>
-            <Button
-              style={{ flex: 1 }}
-              onClick={() => {
-                this.clearList();
-              }}
-            >
+            <Button style={{ flex: 1 }} onClick={() => this.clearList()}>
+              {' '}
               Clear list
             </Button>
-            <Button style={{ flex: 1 }}>Save list</Button>
+            <Button style={{ flex: 1 }} onClick={() => this.saveList()}>
+              Save list
+            </Button>
           </div>
         </div>
         <div style={{ flex: 1, ...gridStyle, margin: 5, ...borderStyle }}>
