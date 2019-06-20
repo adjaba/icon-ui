@@ -2,10 +2,11 @@ import React, { Component, Fragment } from 'react';
 import {
   Button,
   Header,
+  Dropdown,
   List,
   Checkbox,
   Input,
-  Select as BasicSelect,
+  Select,
   Loader,
   Progress,
 } from 'semantic-ui-react';
@@ -13,7 +14,6 @@ import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
 
 import update from 'immutability-helper';
-import Select from 'react-select';
 
 const sectionStyle = {
   flex: 1,
@@ -51,11 +51,11 @@ const ocrEngineOptions = [
 const textureOptions = [
   {
     value: 'textureA',
-    label: 'paper',
+    text: 'paper',
   },
   {
     value: 'textureB',
-    label: 'metal',
+    text: 'metal',
   },
 ];
 
@@ -339,25 +339,20 @@ class App extends Component {
             </div>
             <div style={controlColumnStyle}>
               {/* <Header as="h4">Translation Model</Header>
-              <BasicSelect options={['modelA', 'modelB']} /> */}
+              <select options={['modelA', 'modelB']} /> */}
               <Header as="h4">Texture Transfer</Header>
-              <div style={{ minWidth: '200px' }}>
-                <Select
-                  defaultValue={[]}
-                  isMulti
-                  name="textures"
-                  options={textureOptions}
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  placeholder="Select texture/s"
-                  closeMenuOnSelect={false}
-                  styles={{ display: 'flex', minWidth: '150px' }}
-                />
-              </div>
+              <Dropdown
+                multiple
+                selection
+                fluid
+                clearable
+                options={textureOptions}
+                placeholder="Select texture/s"
+              />
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4"> Style Transfer</Header>
-              <BasicSelect options={styleOptions} default={styleOptions[0]} />
+              <Select options={styleOptions} default={styleOptions[0]} />
               {/* <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
@@ -373,7 +368,7 @@ class App extends Component {
                 />
                 <Checkbox label="Resize generated sample" />
               </div>
-              <BasicSelect
+              <Select
                 style={{ marginTop: 10 }}
                 options={['textureA', 'textureB']}
               />
