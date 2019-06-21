@@ -16,6 +16,7 @@ import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
 
 import update from 'immutability-helper';
+import { isThisISOWeek } from 'date-fns';
 
 const sectionStyle = {
   flex: 1,
@@ -131,7 +132,7 @@ var fileInputs = {
   image: 2,
   properties: {
     1: { name: 'url', placeholder: 'Enter URL' },
-    2: { name: 'file', accept: 'image/x-png,image/gif,image/jpeg' },
+    2: { name: 'file', accept: '.jpg, .jpeg, .png' },
   },
 };
 
@@ -181,6 +182,7 @@ class App extends Component {
       myList: [],
       resize: false,
       mode: null,
+      inputSrc: null,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -191,7 +193,7 @@ class App extends Component {
     this.clearList = this.clearList.bind(this);
     this.saveList = this.saveList.bind(this);
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
-    this.fileChange = this.fileChange.bind(this);
+    this.inputChange = this.inputChange.bind(this);
   }
 
   loadFakeData() {
@@ -228,32 +230,65 @@ class App extends Component {
     });
   }
 
-  onImage(e) {
-    console.log('onImage');
-    const url = URL.createObjectURL(e.target.files[0]);
-    const img = new Image();
-    img.onload = () => {
-      const { height, width } = img;
-
-      const canvas = document.getElementById('temp-canvas');
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      const url = canvas.toDataURL();
-
+  onImage(value) {
+    if (this.state.mode == fileInputs.properties[fileInputs.image].name) {
+      console.log('onImage you submitted a file from local');
+    } else {
+      const inputSrc = this.state.inputSrc;
       this.setState({
-        url,
-        height,
-        width,
+        imgSrc: inputSrc,
       });
-    };
-    img.src = url;
+    }
   }
+  // onImage(e, {value}) {
+  //   console.log('here');
+  //   if (this.state.mode == fileInputs.properties[fileInputs.image].name){
+  //     console.log('why am i here');
+  //     if (e.target){
+  //       const url = URL.createObjectURL(e.target.files[0]);
+  //       const img = new Image();
+  //       img.onload = () => {
+  //         const { height, width } = img;
+
+  //         const canvas = document.getElementById('temp-canvas');
+  //         canvas.width = width;
+  //         canvas.height = height;
+  //         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+  //         const url = canvas.toDataURL();
+
+  //         this.setState({
+  //           url,
+  //           height,
+  //           width,
+  //         });
+  //       };
+  //       img.src = url;
+  //     }
+  //   }
+  //   else {
+  //     console.log('onImage e.target', e.target);
+  //     console.log('e', e);
+  //     console.log('value', value);
+  //     console.log('e.target.form', e.target.form);
+  //     const formData = new FormData(e.target);
+  //     console.log('formData', formData)
+  //     this.setState({
+  //       imgSrc: e.target.value,
+  //     })
+  //   }
+  // }
 
   onImageClick(e) {
     this.setState({
       currentImgSrc: e.target.src ? e.target.src : nullImg,
     });
+  }
+
+  onImageError(e) {
+    // TODO: add links between target.src and imgSrc?
+    // Use case: what happens when invalid URL is entered after valid URL, is previous URL erased?
+    e.target.src = nullImg;
+    alert('Invalid input; please enter a valid image URL or file');
   }
 
   addToList() {
@@ -303,11 +338,11 @@ class App extends Component {
     });
   }
 
-  fileChange() {
-    console.log('file change');
+  inputChange(e) {
     if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
-      console.log('you uploaded a url');
-      console.log(this.state);
+      this.setState({
+        inputSrc: e.target.value,
+      });
     }
   }
   renderControls() {
@@ -328,7 +363,9 @@ class App extends Component {
           >
             <Button
               onClick={() => {
-                this.setState({ mode: fileInputs.properties[1].name });
+                this.setState({
+                  mode: fileInputs.properties[fileInputs.URL].name,
+                });
               }}
             >
               <Icon name="linkify" />
@@ -337,25 +374,21 @@ class App extends Component {
             <Button.Or />
             <Button
               onClick={() => {
-                this.setState({ mode: fileInputs.properties[2].name });
+                this.setState({
+                  mode: fileInputs.properties[fileInputs.image].name,
+                });
               }}
             >
               <Icon name="upload" />
-              {/* // onClick={() => this.refs.fileInputRef.click()}/> */}
               Disk
             </Button>
-            <input
-              ref="fileInputRef"
-              type="file"
-              hidden
-              onChange={this.fileChange}
-            />
           </Button.Group>
           <div
             style={{ height: 191.8, width: 191.8, padding: 10 }}
             id={'temp-canvas'}
           >
             <img
+              onError={this.onImageError}
               style={stretchStyle}
               src={this.state.imgSrc ? this.state.imgSrc : nullImg}
             />
@@ -380,7 +413,9 @@ class App extends Component {
           <Form
             method="post"
             encType="multipart/form-data"
-            onSubmit={this.handleFilesSubmit}
+            onSubmit={(e, value) => {
+              this.onImage(value);
+            }}
           >
             <Form.Input
               action={
@@ -389,7 +424,6 @@ class App extends Component {
                   labelPosition="left"
                   icon="image"
                   content="Load Image"
-                  onChange={() => this.fileChange()}
                 />
               }
               actionPosition="right"
@@ -406,7 +440,12 @@ class App extends Component {
               }
               type={this.state.mode || 'text'}
               disabled={!this.state.mode}
-              onChange={() => this.fileChange()}
+              onChange={e => this.inputChange(e)}
+              accept={
+                this.state.mode == fileInputs.properties[2].name
+                  ? fileInputs.properties[2].accept
+                  : '*'
+              }
             />
           </Form>
           <div style={{ flex: '0 1 0', display: 'flex', padding: 10 }}>
@@ -471,7 +510,6 @@ class App extends Component {
                 style={{ marginTop: 10 }}
                 disabled={!this.state.resize}
                 options={resizingOptions}
-                onClick={() => console.log(this.state)}
               />
             </div>
           </div>
