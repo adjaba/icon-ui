@@ -232,6 +232,8 @@ class App extends Component {
 
   onImage(e, { value }) {
     const inputSrc = this.state.inputSrc;
+    URL.revokeObjectURL(this.state.imgSrc);
+
     this.setState({
       imgSrc: inputSrc,
     });
@@ -345,7 +347,6 @@ class App extends Component {
       this.setState({
         inputSrc: URL.createObjectURL(e.target.files[0]),
       });
-      console.log('inputChange you submitted a file from local');
     }
   }
   renderControls() {
