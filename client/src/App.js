@@ -230,15 +230,11 @@ class App extends Component {
     });
   }
 
-  onImage(value) {
-    if (this.state.mode == fileInputs.properties[fileInputs.image].name) {
-      console.log('onImage you submitted a file from local');
-    } else {
-      const inputSrc = this.state.inputSrc;
-      this.setState({
-        imgSrc: inputSrc,
-      });
-    }
+  onImage(e, { value }) {
+    const inputSrc = this.state.inputSrc;
+    this.setState({
+      imgSrc: inputSrc,
+    });
   }
   // onImage(e, {value}) {
   //   console.log('here');
@@ -343,6 +339,13 @@ class App extends Component {
       this.setState({
         inputSrc: e.target.value,
       });
+    } else if (
+      this.state.mode == fileInputs.properties[fileInputs.image].name
+    ) {
+      this.setState({
+        inputSrc: URL.createObjectURL(e.target.files[0]),
+      });
+      console.log('inputChange you submitted a file from local');
     }
   }
   renderControls() {
@@ -413,9 +416,7 @@ class App extends Component {
           <Form
             method="post"
             encType="multipart/form-data"
-            onSubmit={(e, value) => {
-              this.onImage(value);
-            }}
+            onSubmit={this.onImage}
           >
             <Form.Input
               action={
