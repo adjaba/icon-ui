@@ -450,7 +450,14 @@ class App extends Component {
               }
             />
           </Form>
-          <div style={{ flex: '0 1 0', display: 'flex', padding: 10 }}>
+          <div
+            style={{
+              flex: '0 1 0',
+              display: 'flex',
+              padding: 10,
+              ...borderStyle,
+            }}
+          >
             <div
               style={{
                 flexGrow: 0,
