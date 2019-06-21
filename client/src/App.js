@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import {
   Button,
   Header,
+  Form,
   Dropdown,
   List,
   Checkbox,
@@ -373,48 +374,42 @@ class App extends Component {
             display: 'flex',
             padding: 10,
             flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
-          <Input
-            action={
-              <Button
-                color="blue"
-                labelPosition="left"
-                icon="image"
-                content="Load Image"
-                onChange={() => this.fileChange()}
-              />
-            }
-            actionPosition="right"
-            style={{
-              flex: 1,
-              maxHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            placeholder={
-              this.state.mode
-                ? fileInputs.properties[1].placeholder
-                : 'Choose an input mode to the left'
-            }
-            type={this.state.mode || 'text'}
-            disabled={!this.state.mode}
-            onChange={() => this.fileChange()}
-          />
-
-          {/* <input
-            style={{
-              flex: 1,
-              maxHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            placeholder="Click on an input mode to the left"
-            type= {this.state.mode}
-            disabled = {this.state.mode ? false: true}
+          <Form
+            method="post"
+            encType="multipart/form-data"
+            onSubmit={this.handleFilesSubmit}
           >
-          </input> */}
-          <div style={{ flex: 1, display: 'flex', padding: 10 }}>
+            <Form.Input
+              action={
+                <Button
+                  color="blue"
+                  labelPosition="left"
+                  icon="image"
+                  content="Load Image"
+                  onChange={() => this.fileChange()}
+                />
+              }
+              actionPosition="right"
+              style={{
+                flex: 1,
+                maxHeight: '36px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              placeholder={
+                this.state.mode
+                  ? fileInputs.properties[1].placeholder
+                  : 'Choose an input mode to the left'
+              }
+              type={this.state.mode || 'text'}
+              disabled={!this.state.mode}
+              onChange={() => this.fileChange()}
+            />
+          </Form>
+          <div style={{ flex: '0 1 0', display: 'flex', padding: 10 }}>
             <div
               style={{
                 flexGrow: 0,
@@ -480,10 +475,10 @@ class App extends Component {
               />
             </div>
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: '0 1 0', justifyContent: 'flex-end' }}>
             <Header as="h5">Progress Status </Header>
-            <div style={{ marginBottom: '-20px' }}>
-              <Progress percent={50} progress />
+            <div style={{ marginBottom: '0px' }}>
+              <Progress percent={50} progress style={{ marginBottom: '0px' }} />
             </div>
           </div>
         </div>
