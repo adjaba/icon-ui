@@ -303,6 +303,7 @@ class App extends Component {
   }
 
   fileChange() {
+    console.log('file change');
     if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
       console.log('you uploaded a url');
       console.log(this.state);
@@ -375,12 +376,15 @@ class App extends Component {
           }}
         >
           <Input
-            action={{
-              color: 'blue',
-              labelPosition: 'left',
-              icon: 'image',
-              content: 'Load Image',
-            }}
+            action={
+              <Button
+                color="blue"
+                labelPosition="left"
+                icon="image"
+                content="Load Image"
+                onChange={() => this.fileChange()}
+              />
+            }
             actionPosition="right"
             style={{
               flex: 1,

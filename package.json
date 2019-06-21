@@ -6,6 +6,7 @@
     "start": "concurrently \"cd client && yarn start\" \"cd server && yarn start\""
   },
   "dependencies": {
+    "@material-ui/core": "^4.1.1",
     "concurrently": "^4.1.0"
   }
 }
