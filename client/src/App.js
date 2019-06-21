@@ -53,12 +53,24 @@ const ocrEngineOptions = [
 
 const textureOptions = [
   {
-    value: 'textureA',
-    text: 'paper',
+    value: 'paper',
+    text: 'Paper',
   },
   {
-    value: 'textureB',
-    text: 'metal',
+    value: 'metal',
+    text: 'Metal',
+  },
+  {
+    value: 'stone',
+    text: 'Stone',
+  },
+  {
+    value: 'wood',
+    text: 'Wood',
+  },
+  {
+    value: 'fabric',
+    text: 'Fabric',
   },
 ];
 
@@ -473,8 +485,8 @@ class App extends Component {
               <Input
                 style={{ maxWidth: 100, marginBottom: 10 }}
                 type="number"
-                max="100"
-                min="0"
+                max="25"
+                min="1"
               />
               <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
               <Checkbox label="Sort by color" />
