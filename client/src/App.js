@@ -17,6 +17,11 @@ import { Slider } from 'react-semantic-ui-range';
 
 import update from 'immutability-helper';
 import { isThisISOWeek } from 'date-fns';
+import { zip } from 'rxjs';
+import { saveAs } from 'file-saver';
+
+var JSZip = require('jszip');
+var JSZipUtils = require('jszip-utils');
 
 const sectionStyle = {
   flex: 1,
@@ -103,6 +108,7 @@ const resizingOptions = [
     text: 'Super-resolution',
   },
 ];
+
 const controlColumnStyle = {
   flex: 1,
   display: 'flex',
@@ -336,11 +342,46 @@ class App extends Component {
     });
   }
 
-  saveList() {}
-  // onImageFocus(e){
-  //   console.log(e);
-  //   console.log('hi');
-  // }
+  saveList() {
+    const myList = this.state.myList.map((url, i, arr) => {
+      return {
+        download: url,
+        filename: i,
+      };
+    });
+
+    // download_files(files);
+    var zip = new JSZip();
+    var count = 0;
+    var zipFilename = 'zipFilename.zip';
+
+    // const myList = this.state.myList;
+
+    myList.forEach(function(url) {
+      var filename = url.filename + '.png';
+
+      JSZipUtils.getBinaryContent(
+        'https://cors-anywhere.herokuapp.com/' + url.download,
+        function(err, data) {
+          if (err) {
+            throw err;
+          }
+
+          // alert('here');
+          zip.file(filename, data, { binary: true });
+          count++;
+
+          if (count == myList.length) {
+            var zipFile = zip
+              .generateAsync({ type: 'blob' })
+              .then(function(content) {
+                saveAs(content, zipFilename);
+              });
+          }
+        }
+      );
+    });
+  }
 
   toggleResizeSelect(e) {
     this.setState({
