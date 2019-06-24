@@ -19,6 +19,7 @@ import update from 'immutability-helper';
 import { isThisISOWeek } from 'date-fns';
 import { zip } from 'rxjs';
 import { saveAs } from 'file-saver';
+import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 
 var JSZip = require('jszip');
 var JSZipUtils = require('jszip-utils');
@@ -212,6 +213,8 @@ class App extends Component {
     this.saveList = this.saveList.bind(this);
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
     this.inputChange = this.inputChange.bind(this);
+    this.generate = this.generate.bind(this);
+    this.resize = this.resize.bind(this);
   }
 
   loadFakeData() {
@@ -256,43 +259,36 @@ class App extends Component {
       imgSrc: inputSrc,
     });
   }
-  // onImage(e, {value}) {
-  //   console.log('here');
-  //   if (this.state.mode == fileInputs.properties[fileInputs.image].name){
-  //     console.log('why am i here');
-  //     if (e.target){
-  //       const url = URL.createObjectURL(e.target.files[0]);
-  //       const img = new Image();
-  //       img.onload = () => {
-  //         const { height, width } = img;
 
-  //         const canvas = document.getElementById('temp-canvas');
-  //         canvas.width = width;
-  //         canvas.height = height;
-  //         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-  //         const url = canvas.toDataURL();
+  resize(height = 256, width = 256) {
+    console.log('here');
+    const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
+    const img = new Image();
+    img.onload = () => {
+      // const { height, width } = img;
+      var canvas = document.createElement('CANVAS');
 
-  //         this.setState({
-  //           url,
-  //           height,
-  //           width,
-  //         });
-  //       };
-  //       img.src = url;
-  //     }
-  //   }
-  //   else {
-  //     console.log('onImage e.target', e.target);
-  //     console.log('e', e);
-  //     console.log('value', value);
-  //     console.log('e.target.form', e.target.form);
-  //     const formData = new FormData(e.target);
-  //     console.log('formData', formData)
-  //     this.setState({
-  //       imgSrc: e.target.value,
-  //     })
-  //   }
-  // }
+      // const canvas = document.getElementById('temp-canvas');
+      console.log('sanity check', canvas instanceof HTMLImageElement);
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const url = canvas.toDataURL();
+
+      this.setState({
+        url,
+        height,
+        width,
+      });
+    };
+    img.src = url;
+    console.log(img);
+    alert(img.src);
+  }
+
+  generate() {
+    // this.resize();
+  }
 
   onImageClick(e) {
     this.setState({
@@ -350,12 +346,9 @@ class App extends Component {
       };
     });
 
-    // download_files(files);
     var zip = new JSZip();
     var count = 0;
-    var zipFilename = 'zipFilename.zip';
-
-    // const myList = this.state.myList;
+    var zipFilename = 'myList.zip';
 
     myList.forEach(function(url) {
       var filename = url.filename + '.png';
@@ -454,6 +447,7 @@ class App extends Component {
             type="submit"
             primary
             style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+            onClick={this.generate}
           >
             Generate
           </Button>
