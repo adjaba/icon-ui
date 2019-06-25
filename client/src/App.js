@@ -20,6 +20,7 @@ import { isThisISOWeek } from 'date-fns';
 import { zip } from 'rxjs';
 import { saveAs } from 'file-saver';
 import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
+import { resetWarningCache } from 'prop-types';
 
 var JSZip = require('jszip');
 var JSZipUtils = require('jszip-utils');
@@ -155,13 +156,39 @@ var fileInputs = {
   },
 };
 
+function resize(url, height = 256, width = 256) {
+  return new Promise(function(resolve, reject) {
+    // const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
+    const img = new Image();
+    img.onload = () => {
+      var canvas = document.createElement('CANVAS');
+
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      var data = canvas.toDataURL('image/png');
+      // this.setState({
+      //   url: data,
+      // });
+      // console.log('set url', this.state.url)
+      console.log('END OF RESIZE');
+      if (data) {
+        resolve(data);
+      } else {
+        reject(Error('Resize unsuccessful, base 64 image: ' + data));
+      }
+    };
+    img.src = url;
+  });
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      img: null,
       url: null,
-      bounds: null,
-      zoom: -1,
+      b64: null,
 
       ocrEngine: ocrEngineOptions[0].value,
       filters: {
@@ -214,7 +241,8 @@ class App extends Component {
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
     this.inputChange = this.inputChange.bind(this);
     this.generate = this.generate.bind(this);
-    this.resize = this.resize.bind(this);
+    // this.resize = this.resize.bind(this);
+    this.sendData = this.sendData.bind(this);
   }
 
   loadFakeData() {
@@ -260,34 +288,78 @@ class App extends Component {
     });
   }
 
-  resize(height = 256, width = 256) {
-    console.log('here');
+  async resize(height = 256, width = 256) {
     const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
     const img = new Image();
     img.onload = () => {
-      // const { height, width } = img;
       var canvas = document.createElement('CANVAS');
 
-      // const canvas = document.getElementById('temp-canvas');
-      console.log('sanity check', canvas instanceof HTMLImageElement);
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      const url = canvas.toDataURL();
-
+      var data = canvas.toDataURL('image/png');
       this.setState({
-        url,
-        height,
-        width,
+        url: data,
       });
+      console.log('set url', this.state.url);
+      console.log('END OF RESIZE');
+      return data;
     };
     img.src = url;
-    console.log(img);
-    alert(img.src);
   }
 
-  generate() {
-    // this.resize();
+  async convertToBase64() {
+    const blob2 = this.state.url;
+
+    let blob = await fetch(blob2).then(r => r.blob());
+    console.log(blob instanceof Blob);
+    var reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      var base64data = reader.result;
+      this.setState({
+        b64: base64data,
+      });
+    };
+  }
+
+  checkWidth() {
+    var i = new Image();
+    i.onload = function() {
+      alert(i.width + ', ' + i.height);
+    };
+    i.src = this.state.url;
+  }
+
+  async sendData() {
+    console.log('BEGIN OF SEND DATA');
+    const b64 = this.state.url;
+    alert('HO' + b64);
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        b64,
+        b64,
+      }),
+    })
+      .then(function(response) {
+        return response.json();
+      })
+      .then(data => console.log(data));
+  }
+
+  async generate() {
+    let a = await resize(this.state.imgSrc);
+    this.setState({
+      url: a,
+    });
+    this.sendData();
+    // return resize(this.state.imgSrc).then(() => {
+    //   return this.sendData();
+    // })
   }
 
   onImageClick(e) {
@@ -360,7 +432,6 @@ class App extends Component {
             throw err;
           }
 
-          // alert('here');
           zip.file(filename, data, { binary: true });
           count++;
 
@@ -382,8 +453,25 @@ class App extends Component {
     });
   }
 
-  inputChange(e) {
+  async inputChange(e) {
     if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
+      // const inputSrc = e.target.value;
+      // if (!inputSrc) return;
+
+      // const resp = await fetch('/api/images', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     inputSrc,
+      //   })
+      // });
+
+      // if (!resp.ok){
+      //   console.log('done?');
+      //   return;
+      // }
       this.setState({
         inputSrc: e.target.value,
       });
