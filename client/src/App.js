@@ -158,7 +158,6 @@ var fileInputs = {
 
 function resize(url, height = 256, width = 256) {
   return new Promise(function(resolve, reject) {
-    // const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
     const img = new Image();
     img.onload = () => {
       var canvas = document.createElement('CANVAS');
@@ -167,11 +166,7 @@ function resize(url, height = 256, width = 256) {
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
       var data = canvas.toDataURL('image/png');
-      // this.setState({
-      //   url: data,
-      // });
-      // console.log('set url', this.state.url)
-      console.log('END OF RESIZE');
+
       if (data) {
         resolve(data);
       } else {
@@ -241,7 +236,7 @@ class App extends Component {
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
     this.inputChange = this.inputChange.bind(this);
     this.generate = this.generate.bind(this);
-    // this.resize = this.resize.bind(this);
+    this.resize = this.resize.bind(this);
     this.sendData = this.sendData.bind(this);
   }
 
@@ -288,7 +283,7 @@ class App extends Component {
     });
   }
 
-  async resize(height = 256, width = 256) {
+  resize(height = 256, width = 256) {
     const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
     const img = new Image();
     img.onload = () => {
@@ -303,7 +298,7 @@ class App extends Component {
       });
       console.log('set url', this.state.url);
       console.log('END OF RESIZE');
-      return data;
+      this.sendData();
     };
     img.src = url;
   }
@@ -341,8 +336,11 @@ class App extends Component {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        b64,
-        b64,
+        input_real_img_bytes: { b64: b64 },
+        input_n_style: 20,
+        input_do_gdwct: 0,
+        input_alpha: 0.5,
+        input_categories: ['paper', 'wood'],
       }),
     })
       .then(function(response) {
@@ -352,6 +350,8 @@ class App extends Component {
   }
 
   async generate() {
+    // this.resize();
+    // alert(this.state.url);
     let a = await resize(this.state.imgSrc);
     this.setState({
       url: a,
