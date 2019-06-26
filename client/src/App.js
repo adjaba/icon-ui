@@ -262,7 +262,17 @@ class App extends Component {
 
   resize(height = 256, width = 256) {
     this.log('Validating form inputs');
-    this.formValidation();
+
+    try {
+      this.formValidation();
+    } catch (err) {
+      this.log(err);
+      this.setState({
+        loading: false,
+      });
+      return;
+    }
+
     this.log('Done');
     this.log('Resizing and converting input image');
     const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
@@ -307,7 +317,7 @@ class App extends Component {
   }
 
   formValidation() {
-    if (!(this.state.nSamples && this.state.textures)) {
+    if (!(this.state.nSamples && this.state.textures && this.state.imgSrc)) {
       console.log(!this.styleTransfer);
       // alert ('Enter all required parameters: number of samples, textures, and alpha.')
       throw new Error(
