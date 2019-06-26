@@ -254,7 +254,12 @@ class App extends Component {
     });
   }
 
+  log(string) {
+    document.getElementById('log').innerHTML += string + '<br>';
+  }
+
   resize(height = 256, width = 256) {
+    this.log('Resizing and converting input image');
     const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
     const img = new Image();
     img.onload = () => {
@@ -267,8 +272,7 @@ class App extends Component {
       this.setState({
         url: data,
       });
-      console.log('set url', this.state.url);
-      console.log('END OF RESIZE');
+      this.log('Done');
       this.sendData();
     };
     img.src = url;
@@ -278,7 +282,7 @@ class App extends Component {
     const blob2 = this.state.url;
 
     let blob = await fetch(blob2).then(r => r.blob());
-    console.log(blob instanceof Blob);
+
     var reader = new FileReader();
     reader.readAsDataURL(blob);
     reader.onloadend = () => {
@@ -322,7 +326,7 @@ class App extends Component {
   }
 
   async sendData() {
-    console.log('BEGIN OF SEND DATA');
+    this.log('Sending data to TF serving endpoint');
     const b64 = this.state.url;
     alert('HO' + b64);
     const resp = await fetch('/api/generate', {
@@ -331,22 +335,33 @@ class App extends Component {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input_real_img_bytes: { b64: b64 },
-        input_n_style: 20,
-        input_do_gdwct: 0,
+        input_real_img_bytes: { b64: this.state.url },
+        input_n_style: this.state.nSamples,
+        input_do_gdwct: this.state.styleTransfer,
         input_alpha: 0.5,
-        input_categories: ['paper', 'wood'],
+        input_categories: this.state.textures,
       }),
     })
       .then(function(response) {
         return response.json();
       })
-      .then(data => console.log(data));
+      .then(data => console.log(data))
+      .then(this.log('Received TF data'))
+      .then(
+        this.setState({
+          loading: false,
+        })
+      );
   }
 
   async generate() {
+    this.log('GENERATING IMAGES');
+    this.setState({
+      loading: true,
+    });
+
     this.resize();
-    alert(this.state.url);
+
     // let a = await resize(this.state.imgSrc);
     // this.setState({
     //   url: a,
@@ -450,8 +465,20 @@ class App extends Component {
 
   setNSamples(e) {
     const nSamples = e.target.value;
-    if (nSamples > 25 || nSamples < 0) {
-      throw new Error('Number of Samples entered out of bounds (1 - 25)');
+    if (!nSamples) {
+      this.setState({
+        nSamples: null,
+      });
+    } else if (nSamples > 25 || nSamples < 1) {
+      alert(
+        'Number of Samples entered out of bounds (1 - 25). Please reenter.'
+      );
+      e.target.value = this.state.nSamples;
+      // throw new Error('Number of Samples entered out of bounds (1 - 25)');
+    } else {
+      this.setState({
+        nSamples: parseInt(e.target.value),
+      });
     }
   }
 
@@ -538,6 +565,7 @@ class App extends Component {
             primary
             style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
             onClick={this.generate}
+            loading={this.state.loading}
           >
             Generate
           </Button>
@@ -627,12 +655,19 @@ class App extends Component {
                 fluid
                 clearable
                 options={textureOptions}
+                onChange={(e, { value }) => this.setState({ texture: value })}
                 placeholder="Select texture/s"
               />
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4"> Style Transfer</Header>
-              <Select options={styleOptions} defaultValue={0} />
+              <Select
+                options={styleOptions}
+                defaultValue={0}
+                onChange={(e, { value }) =>
+                  this.setState({ styleTransfer: value })
+                }
+              />
               {/* <Header as="h4">Style Parameter</Header>
               <Slider
                 color="blue"
@@ -772,6 +807,10 @@ class App extends Component {
     );
   }
 
+  renderLog() {
+    return <div id="log" style={{ flex: 1, margin: 5, ...borderStyle }} />;
+  }
+
   render() {
     const { ocrEngine, data, selectionResult, displaySettings } = this.state;
 
@@ -787,6 +826,10 @@ class App extends Component {
       >
         <div style={{ flex: '0 0 auto' }}>{this.renderControls()}</div>
         <div style={{ flex: 1, minHeight: 0 }}>{this.renderImages()}</div>
+        <div style={{ flex: '0 0 auto', maxHeight: '100px' }}>
+          {' '}
+          {this.renderLog()}{' '}
+        </div>
       </div>
     );
   }

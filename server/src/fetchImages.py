@@ -39,8 +39,7 @@ def sanity():
     jsonData = json.dumps({'instances': [content]})
 
     r = requests.post(endpoint, data = jsonData)
-    print(r.text)
-    return jsonify(hello="world", hi="earth")
+    return jsonify(r.text)
 
 
 def get_url_as_base64(url):
