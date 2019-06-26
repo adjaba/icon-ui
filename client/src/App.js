@@ -195,11 +195,11 @@ class App extends Component {
       textures: [],
       alpha: null,
       styleTransfer: 0,
+      generated: [],
     };
 
     this.onImage = this.onImage.bind(this);
     this.loadData = this.loadData.bind(this);
-    this.loadFakeData = this.loadFakeData.bind(this);
     this.addToList = this.addToList.bind(this);
     this.removeFromList = this.removeFromList.bind(this);
     this.clearList = this.clearList.bind(this);
@@ -211,22 +211,17 @@ class App extends Component {
     this.sendData = this.sendData.bind(this);
   }
 
-  loadFakeData() {
-    this.setState({
-      data: update(this.state.data, {
-        boundingBox: {
-          $set: [], // TODO: fake data
-        },
-      }),
-    });
-  }
-
   async loadData(jsonResponse) {
     this.log('Received TF data');
     this.log('Loading received images');
     console.log(jsonResponse);
     var obj = JSON.parse(jsonResponse);
-    console.log(obj['predictions']);
+    var data = obj['predictions'].map(
+      prediction => 'data:image/png;base64,' + prediction
+    );
+    this.setState({
+      generated: data,
+    });
     // const { url, ocrEngine } = this.state;
     // this.setState({ loading: true });
     // const resp = await fetch('/api/recognize', {
@@ -290,7 +285,7 @@ class App extends Component {
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
       var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
       this.setState({
-        url: data,
+        b64: data,
       });
       this.log('Done');
       this.sendData();
@@ -299,7 +294,7 @@ class App extends Component {
   }
 
   async convertToBase64() {
-    const blob2 = this.state.url;
+    const blob2 = this.state.imgSrc;
 
     let blob = await fetch(blob2).then(r => r.blob());
 
@@ -318,7 +313,7 @@ class App extends Component {
     i.onload = function() {
       alert(i.width + ', ' + i.height);
     };
-    i.src = this.state.url;
+    i.src = this.state.b64;
   }
 
   formValidation() {
@@ -336,7 +331,7 @@ class App extends Component {
 
   async sendData() {
     this.log('Sending data to TF serving endpoint');
-    const b64 = this.state.url;
+    const b64 = this.state.b64;
     alert('HO' + b64);
     const resp = await fetch('/api/generate', {
       method: 'POST',
@@ -344,7 +339,7 @@ class App extends Component {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input_real_img_bytes: { b64: this.state.url },
+        input_real_img_bytes: { b64: this.state.b64 },
         input_n_style: this.state.nSamples,
         input_do_gdwct: this.state.styleTransfer,
         input_alpha: 0.5,
@@ -372,7 +367,7 @@ class App extends Component {
 
     // let a = await resize(this.state.imgSrc);
     // this.setState({
-    //   url: a,
+    //   b64: a,
     // });
     // this.sendData();
     // return resize(this.state.imgSrc).then(() => {
@@ -725,7 +720,7 @@ class App extends Component {
 
   renderGridItems() {
     const size = 150;
-    return fakeData.map(url => (
+    return this.state.generated.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
@@ -736,7 +731,7 @@ class App extends Component {
           src={url}
           key={url}
           id={url}
-          alt={''}
+          alt={'image load fail'}
           onFocus={() => {
             console.log('hi');
           }}
@@ -813,7 +808,7 @@ class App extends Component {
   }
 
   render() {
-    const { ocrEngine, data, selectionResult, displaySettings } = this.state;
+    // const { ocrEngine, data, selectionResult, displaySettings } = this.state;
 
     return (
       <div
