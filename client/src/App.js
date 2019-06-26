@@ -255,7 +255,9 @@ class App extends Component {
   }
 
   log(string) {
-    document.getElementById('log').innerHTML += string + '<br>';
+    var logDiv = document.getElementById('log');
+    logDiv.innerHTML += string + '<br>';
+    logDiv.scrollTop = logDiv.scrollHeight;
   }
 
   resize(height = 256, width = 256) {
@@ -807,10 +809,6 @@ class App extends Component {
     );
   }
 
-  renderLog() {
-    return <div id="log" style={{ flex: 1, margin: 5, ...borderStyle }} />;
-  }
-
   render() {
     const { ocrEngine, data, selectionResult, displaySettings } = this.state;
 
@@ -826,10 +824,16 @@ class App extends Component {
       >
         <div style={{ flex: '0 0 auto' }}>{this.renderControls()}</div>
         <div style={{ flex: 1, minHeight: 0 }}>{this.renderImages()}</div>
-        <div style={{ flex: '0 0 auto', maxHeight: '100px' }}>
-          {' '}
-          {this.renderLog()}{' '}
-        </div>
+        <div
+          style={{
+            flex: '1 1 0',
+            overflowY: 'auto',
+            margin: 5,
+            ...borderStyle,
+            maxHeight: '100px',
+          }}
+          id="log"
+        />
       </div>
     );
   }
