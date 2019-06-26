@@ -261,6 +261,9 @@ class App extends Component {
   }
 
   resize(height = 256, width = 256) {
+    this.log('Validating form inputs');
+    this.formValidation();
+    this.log('Done');
     this.log('Resizing and converting input image');
     const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
     const img = new Image();
@@ -304,22 +307,12 @@ class App extends Component {
   }
 
   formValidation() {
-    if (
-      !(
-        this.state.nSamples &&
-        this.state.styleTransfer &&
-        this.state.textures &&
-        this.state.alpha
-      )
-    ) {
+    if (!(this.state.nSamples && this.state.textures)) {
+      console.log(!this.styleTransfer);
       // alert ('Enter all required parameters: number of samples, textures, and alpha.')
       throw new Error(
         'Enter all required parameters: number of samples, textures, and alpha.'
       );
-    } else if (this.state.nSamples > 25) {
-      throw new Error('Exceeded maximum number of samples (25)');
-    } else if (this.state.nSamples < 1) {
-      throw new Error('Below minimum number of samples (1)');
     } else if (this.state.alpha < 0) {
       throw new Error('Below minimum alpha (0.0)');
     } else if (this.state.alpha > 2) {
@@ -552,10 +545,7 @@ class App extends Component {
               Disk
             </Button>
           </Button.Group>
-          <div
-            style={{ height: 191.8, width: 191.8, padding: 10 }}
-            id={'temp-canvas'}
-          >
+          <div style={{ height: 191.8, width: 191.8, padding: 10 }}>
             <img
               onError={this.onImageError}
               style={stretchStyle}
@@ -657,7 +647,7 @@ class App extends Component {
                 fluid
                 clearable
                 options={textureOptions}
-                onChange={(e, { value }) => this.setState({ texture: value })}
+                onChange={(e, { value }) => this.setState({ textures: value })}
                 placeholder="Select texture/s"
               />
             </div>
