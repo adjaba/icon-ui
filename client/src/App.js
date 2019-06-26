@@ -184,46 +184,17 @@ class App extends Component {
       img: null,
       url: null,
       b64: null,
-
-      ocrEngine: ocrEngineOptions[0].value,
-      filters: {
-        english: true,
-        korean: true,
-        digit: true,
-        special: true,
-      },
-      displaySettings: {
-        rectangles: {
-          checked: true,
-          color: '#ffcc00',
-        },
-        annotations: {
-          checked: false,
-          color: '#333300',
-        },
-        coordinates: {
-          checked: false,
-          color: null,
-        },
-      },
-      selectionResult: {
-        word: '',
-        xs: 0,
-        ys: 0,
-      },
-
       loading: false,
-      data: {
-        boundingBox: [],
-        text_string: '',
-      },
-
       currentImgSrc: null,
       imgSrc: null,
       myList: [],
       resize: false,
       mode: null,
       inputSrc: null,
+      nSamples: null,
+      textures: [],
+      alpha: null,
+      styleTransfer: 0,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -292,7 +263,7 @@ class App extends Component {
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      var data = canvas.toDataURL('image/png');
+      var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
       this.setState({
         url: data,
       });
@@ -326,6 +297,30 @@ class App extends Component {
     i.src = this.state.url;
   }
 
+  formValidation() {
+    if (
+      !(
+        this.state.nSamples &&
+        this.state.styleTransfer &&
+        this.state.textures &&
+        this.state.alpha
+      )
+    ) {
+      // alert ('Enter all required parameters: number of samples, textures, and alpha.')
+      throw new Error(
+        'Enter all required parameters: number of samples, textures, and alpha.'
+      );
+    } else if (this.state.nSamples > 25) {
+      throw new Error('Exceeded maximum number of samples (25)');
+    } else if (this.state.nSamples < 1) {
+      throw new Error('Below minimum number of samples (1)');
+    } else if (this.state.alpha < 0) {
+      throw new Error('Below minimum alpha (0.0)');
+    } else if (this.state.alpha > 2) {
+      throw new Error('Above maximum alpha (2.0)');
+    }
+  }
+
   async sendData() {
     console.log('BEGIN OF SEND DATA');
     const b64 = this.state.url;
@@ -350,13 +345,13 @@ class App extends Component {
   }
 
   async generate() {
-    // this.resize();
-    // alert(this.state.url);
-    let a = await resize(this.state.imgSrc);
-    this.setState({
-      url: a,
-    });
-    this.sendData();
+    this.resize();
+    alert(this.state.url);
+    // let a = await resize(this.state.imgSrc);
+    // this.setState({
+    //   url: a,
+    // });
+    // this.sendData();
     // return resize(this.state.imgSrc).then(() => {
     //   return this.sendData();
     // })
@@ -451,6 +446,13 @@ class App extends Component {
     this.setState({
       resize: !this.state.resize,
     });
+  }
+
+  setNSamples(e) {
+    const nSamples = e.target.value;
+    if (nSamples > 25 || nSamples < 0) {
+      throw new Error('Number of Samples entered out of bounds (1 - 25)');
+    }
   }
 
   async inputChange(e) {
@@ -610,6 +612,7 @@ class App extends Component {
                 type="number"
                 max="25"
                 min="1"
+                onChange={e => this.setNSamples(e)}
               />
               <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
               <Checkbox label="Sort by color" />
