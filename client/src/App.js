@@ -221,28 +221,33 @@ class App extends Component {
     });
   }
 
-  async loadData() {
-    const { url, ocrEngine } = this.state;
-    this.setState({ loading: true });
-    const resp = await fetch('/api/recognize', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // TODO: fix the format of the request body
-        imageData: url,
-        engine: ocrEngine,
-      }),
-    });
+  async loadData(jsonResponse) {
+    this.log('Received TF data');
+    this.log('Loading received images');
+    console.log(jsonResponse);
+    var obj = JSON.parse(jsonResponse);
+    console.log(obj['predictions']);
+    // const { url, ocrEngine } = this.state;
+    // this.setState({ loading: true });
+    // const resp = await fetch('/api/recognize', {
+    //   method: 'POST',
+    //   headers: {
+    //     Accept: 'application/json',
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     // TODO: fix the format of the request body
+    //     imageData: url,
+    //     engine: ocrEngine,
+    //   }),
+    // });
 
-    const data = await resp.json();
-    // TODO: fix the exact json response format
-    this.setState({
-      loading: false,
-      data: data,
-    });
+    // const data = await resp.json();
+    // // TODO: fix the exact json response format
+    // this.setState({
+    //   loading: false,
+    //   data: data,
+    // });
   }
 
   onImage(e, { value }) {
@@ -318,7 +323,6 @@ class App extends Component {
 
   formValidation() {
     if (!(this.state.nSamples && this.state.textures && this.state.imgSrc)) {
-      console.log(!this.styleTransfer);
       // alert ('Enter all required parameters: number of samples, textures, and alpha.')
       throw new Error(
         'Enter all required parameters: number of samples, textures, and alpha.'
@@ -347,11 +351,10 @@ class App extends Component {
         input_categories: this.state.textures,
       }),
     })
-      .then(function(response) {
-        return response.json();
+      .then(function(data) {
+        return data.json();
       })
-      .then(data => console.log(data))
-      .then(this.log('Received TF data'))
+      .then(response => this.loadData(response))
       .then(
         this.setState({
           loading: false,
