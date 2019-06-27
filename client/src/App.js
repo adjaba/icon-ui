@@ -495,31 +495,38 @@ class App extends Component {
       e.target.value = this.state.nSamples;
       // throw new Error('Number of Samples entered out of bounds (1 - 25)');
     } else {
+      if (e.target.value != parseInt(e.target.value)) {
+        alert('Please input a whole number');
+        e.target.value = parseInt(e.target.value);
+      }
+
       this.setState({
         nSamples: parseInt(e.target.value),
       });
     }
   }
 
+  setAlpha(e) {
+    const alpha = e.target.value;
+    if (!alpha) {
+      this.setState({
+        alpha: null,
+      });
+    } else if (alpha > 2 || alpha < 0) {
+      alert(
+        'Number of Samples entered out of bounds (0.0 - 2.0). Please reenter.'
+      );
+      e.target.value = this.state.alpha;
+      // throw new Error('Number of Samples entered out of bounds (1 - 25)');
+    } else {
+      this.setState({
+        alpha: parseFloat(e.target.value),
+      });
+    }
+  }
+
   async inputChange(e) {
     if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
-      // const inputSrc = e.target.value;
-      // if (!inputSrc) return;
-
-      // const resp = await fetch('/api/images', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     inputSrc,
-      //   })
-      // });
-
-      // if (!resp.ok){
-      //   console.log('done?');
-      //   return;
-      // }
       this.setState({
         inputSrc: e.target.value,
       });
@@ -664,7 +671,9 @@ class App extends Component {
             <div style={controlColumnStyle}>
               {/* <Header as="h4">Translation Model</Header>
               <select options={['modelA', 'modelB']} /> */}
-              <Header as="h4">Texture Transfer</Header>
+              <Header as="h4" style={{ marginTop: '0px' }}>
+                Texture Transfer
+              </Header>
               <Dropdown
                 multiple
                 selection
@@ -673,6 +682,17 @@ class App extends Component {
                 options={textureOptions}
                 onChange={(e, { value }) => this.setState({ textures: value })}
                 placeholder="Select texture/s"
+              />
+              <Header as="h4" style={{ marginTop: '10px' }}>
+                Alpha
+              </Header>
+              <Input
+                style={{ maxWidth: 100, marginBottom: 10 }}
+                type="number"
+                step="0.25"
+                max="2"
+                min="0"
+                onChange={e => this.setAlpha(e)}
               />
             </div>
             <div style={controlColumnStyle}>
@@ -711,7 +731,13 @@ class App extends Component {
               />
             </div>
           </div>
-          <div style={{ flex: '0 1 0', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              flex: '0 1 0',
+              justifyContent: 'flex-end',
+              marginTop: '10px',
+            }}
+          >
             <Header as="h5">Progress Status </Header>
             <div style={{ marginBottom: '0px' }}>
               <Progress percent={50} progress style={{ marginBottom: '0px' }} />
