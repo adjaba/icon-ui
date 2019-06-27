@@ -181,6 +181,7 @@ class App extends Component {
       styleTransfer: 0,
       generated: [],
       genDict: [],
+      progress: 0,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -199,19 +200,13 @@ class App extends Component {
   loadData(jsonResponse) {
     this.log('Received TF data');
     this.log('Loading received images');
-    console.log(jsonResponse);
     var obj = JSON.parse(jsonResponse);
     var data = obj['predictions'].map(
       prediction =>
         'data:image/png;base64,' +
         prediction.replace(/-/g, '+').replace(/_/g, '/')
     );
-    console.log('data', data);
-    var data2 = [...data];
     var genDict = [];
-    this.setState({
-      generated: data2,
-    });
     for (var i = 0; i < this.state.textures.length; i++) {
       var splice = data.splice(0, this.state.nSamples);
       genDict[i] = splice;
@@ -219,6 +214,7 @@ class App extends Component {
     this.setState({
       genDict: genDict,
     });
+    this.progress(40);
   }
 
   onImage(e, { value }) {
@@ -238,6 +234,13 @@ class App extends Component {
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 
+  progress(int) {
+    const progress = this.state.progress;
+    this.setState({
+      progress: progress + int,
+    });
+  }
+
   async resize(height = 256, width = 256) {
     this.log('Validating form inputs');
 
@@ -252,6 +255,7 @@ class App extends Component {
     }
 
     this.log('Done');
+    this.progress(10);
     this.log('Resizing and converting input image');
 
     var url;
@@ -278,10 +282,12 @@ class App extends Component {
         b64: data,
       });
       this.log('Set B64, Done');
+      this.progress(25);
       this.sendData();
     };
     img.src = url;
     this.log('set new image, waiting for onload');
+    this.progress(5);
   }
 
   checkWidth() {
@@ -345,12 +351,14 @@ class App extends Component {
           loading: false,
         })
       )
+      .then(this.progress(40))
       .catch(err => this.log(err));
   }
 
   async generate() {
     this.log('GENERATING IMAGES');
     this.setState({
+      progress: 0,
       loading: true,
     });
 
@@ -713,7 +721,11 @@ class App extends Component {
           >
             <Header as="h5">Progress Status </Header>
             <div style={{ marginBottom: '0px' }}>
-              <Progress percent={50} progress style={{ marginBottom: '0px' }} />
+              <Progress
+                percent={this.state.progress}
+                progress
+                style={{ marginBottom: '0px' }}
+              />
             </div>
           </div>
         </div>
@@ -735,7 +747,6 @@ class App extends Component {
 
   renderCategory(list, index) {
     const size = 150;
-
     return list.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
@@ -756,19 +767,21 @@ class App extends Component {
     const size = 150;
 
     return this.state.genDict.map((list, index) => (
-      <div
-        style={{
-          flex: 1,
-          ...gridStyle,
-          margin: 5,
-          display: 'flex',
-          overflowY: 0,
-          borderBottom: 'solid 1px #ccc',
-        }}
-      >
-        {' '}
+      <div>
         <Header as="h5">{this.state.textures[index]}</Header>
-        {this.renderCategory(list, index)}
+        <div
+          style={{
+            flex: 1,
+            ...gridStyle,
+            margin: 5,
+            display: 'flex',
+            overflowY: 0,
+            borderBottom: 'solid 1px #ccc',
+          }}
+        >
+          {' '}
+          {this.renderCategory(list, index)}
+        </div>
       </div>
     ));
   }
