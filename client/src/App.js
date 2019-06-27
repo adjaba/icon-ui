@@ -213,8 +213,9 @@ class App extends Component {
     }
     this.setState({
       genDict: genDict,
+      loading: false,
+      progress: 100,
     });
-    this.progress(40);
   }
 
   onImage(e, { value }) {
@@ -234,13 +235,6 @@ class App extends Component {
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 
-  progress(int) {
-    const progress = this.state.progress;
-    this.setState({
-      progress: progress + int,
-    });
-  }
-
   async resize(height = 256, width = 256) {
     this.log('Validating form inputs');
 
@@ -255,7 +249,6 @@ class App extends Component {
     }
 
     this.log('Done');
-    this.progress(10);
     this.log('Resizing and converting input image');
 
     var url;
@@ -280,14 +273,16 @@ class App extends Component {
       var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
       this.setState({
         b64: data,
+        progress: 40,
       });
       this.log('Set B64, Done');
-      this.progress(25);
       this.sendData();
     };
     img.src = url;
     this.log('set new image, waiting for onload');
-    this.progress(5);
+    this.setState({
+      progress: 0,
+    });
   }
 
   checkWidth() {
@@ -322,8 +317,6 @@ class App extends Component {
   async sendData() {
     this.log('Sending data to TF serving endpoint');
     const b64 = this.state.b64;
-    // console.log(b64);
-    // this.checkWidth();
 
     const resp = await fetch('/api/generate', {
       method: 'POST',
@@ -348,17 +341,15 @@ class App extends Component {
       .then(response => this.loadData(response))
       .then(
         this.setState({
-          loading: false,
+          progress: 60,
         })
       )
-      .then(this.progress(40))
       .catch(err => this.log(err));
   }
 
   async generate() {
     this.log('GENERATING IMAGES');
     this.setState({
-      progress: 0,
       loading: true,
     });
 
@@ -569,6 +560,7 @@ class App extends Component {
             style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
             onClick={this.generate}
             loading={this.state.loading}
+            disabled={this.state.loading}
           >
             Generate
           </Button>
@@ -645,6 +637,7 @@ class App extends Component {
                 max="25"
                 min="1"
                 onChange={e => this.setNSamples(e)}
+                disabled={this.state.loading}
               />
               <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
               <Checkbox label="Sort by color" />
@@ -663,6 +656,7 @@ class App extends Component {
                 options={textureOptions}
                 onChange={(e, { value }) => this.setState({ textures: value })}
                 placeholder="Select texture/s"
+                disabled={this.state.loading}
               />
               <Header as="h4" style={{ marginTop: '10px' }}>
                 Alpha
@@ -674,6 +668,7 @@ class App extends Component {
                 max="2"
                 min="0"
                 onChange={e => this.setAlpha(e)}
+                disabled={this.state.loading}
               />
             </div>
             <div style={controlColumnStyle}>
@@ -684,6 +679,7 @@ class App extends Component {
                 onChange={(e, { value }) =>
                   this.setState({ styleTransfer: value })
                 }
+                disabled={this.state.loading}
               />
               {/* <Header as="h4">Style Parameter</Header>
               <Slider
@@ -764,8 +760,6 @@ class App extends Component {
   }
 
   renderGridItems() {
-    const size = 150;
-
     return this.state.genDict.map((list, index) => (
       <div>
         <Header as="h5">{this.state.textures[index]}</Header>
@@ -864,8 +858,6 @@ class App extends Component {
   }
 
   render() {
-    // const { ocrEngine, data, selectionResult, displaySettings } = this.state;
-
     return (
       <div
         style={{
