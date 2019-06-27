@@ -190,6 +190,7 @@ class App extends Component {
       myList: [],
       resize: false,
       mode: null,
+      imgMode: null,
       inputSrc: null,
       nSamples: null,
       textures: [],
@@ -246,11 +247,13 @@ class App extends Component {
   }
 
   onImage(e, { value }) {
+    const inputMode = this.state.mode;
     const inputSrc = this.state.inputSrc;
     URL.revokeObjectURL(this.state.imgSrc);
 
     this.setState({
       imgSrc: inputSrc,
+      imgMode: inputMode,
     });
   }
 
@@ -260,7 +263,7 @@ class App extends Component {
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 
-  resize(height = 256, width = 256) {
+  async resize(height = 256, width = 256) {
     this.log('Validating form inputs');
 
     try {
@@ -275,7 +278,19 @@ class App extends Component {
 
     this.log('Done');
     this.log('Resizing and converting input image');
-    const url = this.state.imgSrc; //URL.createObjectURL(e.target.files[0]);
+
+    var url;
+    if (this.state.imgMode === fileInputs.properties[fileInputs.URL].name) {
+      url = '/api/proxy/' + this.state.imgSrc;
+    } else if (
+      this.state.imgMode === fileInputs.properties[fileInputs.image].name
+    ) {
+      url = this.state.imgSrc;
+    } else {
+      throw new Error("This really shouldn't be happening.");
+    }
+    this.log('Created img url');
+
     const img = new Image();
     img.onload = () => {
       var canvas = document.createElement('CANVAS');
@@ -287,10 +302,11 @@ class App extends Component {
       this.setState({
         b64: data,
       });
-      this.log('Done');
+      this.log('Set B64, Done');
       this.sendData();
     };
     img.src = url;
+    this.log('set new image, waiting for onload');
   }
 
   async convertToBase64() {
