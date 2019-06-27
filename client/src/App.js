@@ -218,7 +218,9 @@ class App extends Component {
     console.log(jsonResponse);
     var obj = JSON.parse(jsonResponse);
     var data = obj['predictions'].map(
-      prediction => 'data:image/png;base64,' + prediction
+      prediction =>
+        'data:image/png;base64,' +
+        prediction.replace(/-/g, '+').replace(/_/g, '/')
     );
     this.setState({
       generated: data,
@@ -325,15 +327,23 @@ class App extends Component {
   }
 
   checkWidth() {
+    this.log('sanity check width');
     var i = new Image();
     i.onload = function() {
       alert(i.width + ', ' + i.height);
     };
-    i.src = this.state.b64;
+    i.src = 'data:image/png;base64,' + this.state.b64;
   }
 
   formValidation() {
-    if (!(this.state.nSamples && this.state.textures && this.state.imgSrc)) {
+    if (
+      !(
+        this.state.nSamples &&
+        this.state.textures &&
+        this.state.imgSrc &&
+        this.state.alpha
+      )
+    ) {
       // alert ('Enter all required parameters: number of samples, textures, and alpha.')
       throw new Error(
         'Enter all required parameters: number of samples, textures, and alpha.'
@@ -348,7 +358,8 @@ class App extends Component {
   async sendData() {
     this.log('Sending data to TF serving endpoint');
     const b64 = this.state.b64;
-    alert('HO' + b64);
+    console.log(b64);
+    this.checkWidth();
     const resp = await fetch('/api/generate', {
       method: 'POST',
       headers: {
@@ -358,7 +369,7 @@ class App extends Component {
         input_real_img_bytes: { b64: this.state.b64 },
         input_n_style: this.state.nSamples,
         input_do_gdwct: this.state.styleTransfer,
-        input_alpha: 0.5,
+        input_alpha: this.state.alpha,
         input_categories: this.state.textures,
       }),
     })
@@ -622,6 +633,7 @@ class App extends Component {
                 maxHeight: '36px',
                 display: 'flex',
                 alignItems: 'center',
+                marginBottom: '10px',
               }}
               placeholder={
                 this.state.mode
