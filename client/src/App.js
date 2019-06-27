@@ -156,33 +156,16 @@ var fileInputs = {
   },
 };
 
-function resize(url, height = 256, width = 256) {
-  return new Promise(function(resolve, reject) {
-    const img = new Image();
-    img.onload = () => {
-      var canvas = document.createElement('CANVAS');
-
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      var data = canvas.toDataURL('image/png');
-
-      if (data) {
-        resolve(data);
-      } else {
-        reject(Error('Resize unsuccessful, base 64 image: ' + data));
-      }
-    };
-    img.src = url;
-  });
-}
-
+const IP = '172.20.79.104';
+const PORT = 8501;
+const MODEL_NAME = 'tsgan_gdwct';
+const endpoint =
+  'http://' + IP + ':' + PORT + '/v1/models/' + MODEL_NAME + ':predict';
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       img: null,
-      url: null,
       b64: null,
       loading: false,
       currentImgSrc: null,
@@ -197,6 +180,7 @@ class App extends Component {
       alpha: null,
       styleTransfer: 0,
       generated: [],
+      genDict: [],
     };
 
     this.onImage = this.onImage.bind(this);
@@ -212,7 +196,7 @@ class App extends Component {
     this.sendData = this.sendData.bind(this);
   }
 
-  async loadData(jsonResponse) {
+  loadData(jsonResponse) {
     this.log('Received TF data');
     this.log('Loading received images');
     console.log(jsonResponse);
@@ -222,30 +206,19 @@ class App extends Component {
         'data:image/png;base64,' +
         prediction.replace(/-/g, '+').replace(/_/g, '/')
     );
+    console.log('data', data);
+    var data2 = [...data];
+    var genDict = [];
     this.setState({
-      generated: data,
+      generated: data2,
     });
-    // const { url, ocrEngine } = this.state;
-    // this.setState({ loading: true });
-    // const resp = await fetch('/api/recognize', {
-    //   method: 'POST',
-    //   headers: {
-    //     Accept: 'application/json',
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     // TODO: fix the format of the request body
-    //     imageData: url,
-    //     engine: ocrEngine,
-    //   }),
-    // });
-
-    // const data = await resp.json();
-    // // TODO: fix the exact json response format
-    // this.setState({
-    //   loading: false,
-    //   data: data,
-    // });
+    for (var i = 0; i < this.state.textures.length; i++) {
+      var splice = data.splice(0, this.state.nSamples);
+      genDict[i] = splice;
+    }
+    this.setState({
+      genDict: genDict,
+    });
   }
 
   onImage(e, { value }) {
@@ -311,21 +284,6 @@ class App extends Component {
     this.log('set new image, waiting for onload');
   }
 
-  async convertToBase64() {
-    const blob2 = this.state.imgSrc;
-
-    let blob = await fetch(blob2).then(r => r.blob());
-
-    var reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onloadend = () => {
-      var base64data = reader.result;
-      this.setState({
-        b64: base64data,
-      });
-    };
-  }
-
   checkWidth() {
     this.log('sanity check width');
     var i = new Image();
@@ -358,19 +316,24 @@ class App extends Component {
   async sendData() {
     this.log('Sending data to TF serving endpoint');
     const b64 = this.state.b64;
-    console.log(b64);
-    this.checkWidth();
+    // console.log(b64);
+    // this.checkWidth();
+
     const resp = await fetch('/api/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input_real_img_bytes: { b64: this.state.b64 },
-        input_n_style: this.state.nSamples,
-        input_do_gdwct: this.state.styleTransfer,
-        input_alpha: this.state.alpha,
-        input_categories: this.state.textures,
+        instances: [
+          {
+            input_real_img_bytes: { b64: this.state.b64 },
+            input_n_style: this.state.nSamples,
+            input_do_gdwct: this.state.styleTransfer,
+            input_alpha: this.state.alpha,
+            input_categories: this.state.textures,
+          },
+        ],
       }),
     })
       .then(function(data) {
@@ -381,7 +344,8 @@ class App extends Component {
         this.setState({
           loading: false,
         })
-      );
+      )
+      .catch(err => this.log(err));
   }
 
   async generate() {
@@ -465,25 +429,22 @@ class App extends Component {
     myList.forEach(function(url) {
       var filename = url.filename + '.png';
 
-      JSZipUtils.getBinaryContent(
-        'https://cors-anywhere.herokuapp.com/' + url.download,
-        function(err, data) {
-          if (err) {
-            throw err;
-          }
-
-          zip.file(filename, data, { binary: true });
-          count++;
-
-          if (count == myList.length) {
-            var zipFile = zip
-              .generateAsync({ type: 'blob' })
-              .then(function(content) {
-                saveAs(content, zipFilename);
-              });
-          }
+      JSZipUtils.getBinaryContent(url.download, function(err, data) {
+        if (err) {
+          throw err;
         }
-      );
+
+        zip.file(filename, data, { binary: true });
+        count++;
+
+        if (count == myList.length) {
+          var zipFile = zip
+            .generateAsync({ type: 'blob' })
+            .then(function(content) {
+              saveAs(content, zipFilename);
+            });
+        }
+      });
     });
   }
 
@@ -772,24 +733,42 @@ class App extends Component {
     ));
   }
 
-  renderGridItems() {
+  renderCategory(list, index) {
     const size = 150;
-    return this.state.generated.map(url => (
+
+    return list.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
-        onFocus={() => console.log('hi')}
       >
         <img
           style={stretchStyle}
           src={url}
           key={url}
           id={url}
-          alt={'image load fail'}
-          onFocus={() => {
-            console.log('hi');
-          }}
+          alt={'load fail'}
         />
+      </div>
+    ));
+  }
+
+  renderGridItems() {
+    const size = 150;
+
+    return this.state.genDict.map((list, index) => (
+      <div
+        style={{
+          flex: 1,
+          ...gridStyle,
+          margin: 5,
+          display: 'flex',
+          overflowY: 0,
+          borderBottom: 'solid 1px #ccc',
+        }}
+      >
+        {' '}
+        <Header as="h5">{this.state.textures[index]}</Header>
+        {this.renderCategory(list, index)}
       </div>
     ));
   }
@@ -854,7 +833,17 @@ class App extends Component {
             </Button>
           </div>
         </div>
-        <div style={{ flex: 1, ...gridStyle, margin: 5, ...borderStyle }}>
+        <div
+          style={{
+            flex: 1,
+            ...gridStyle,
+            margin: 5,
+            ...borderStyle,
+            flexWrap: 0,
+            flexDirection: 'column',
+            placeContent: 'start',
+          }}
+        >
           {this.renderGridItems()}
         </div>
       </div>
