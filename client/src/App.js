@@ -182,6 +182,7 @@ class App extends Component {
       generated: [],
       genDict: [],
       progress: 0,
+      keepHistory: false,
     };
 
     this.onImage = this.onImage.bind(this);
@@ -191,6 +192,7 @@ class App extends Component {
     this.clearList = this.clearList.bind(this);
     this.saveList = this.saveList.bind(this);
     this.toggleResizeSelect = this.toggleResizeSelect.bind(this);
+    this.toggleHistory = this.toggleHistory.bind(this);
     this.inputChange = this.inputChange.bind(this);
     this.generate = this.generate.bind(this);
     this.resize = this.resize.bind(this);
@@ -206,10 +208,10 @@ class App extends Component {
         'data:image/png;base64,' +
         prediction.replace(/-/g, '+').replace(/_/g, '/')
     );
-    var genDict = [];
-    for (var i = 0; i < this.state.textures.length; i++) {
+    var genDict = {};
+    for (const texture of this.state.textures) {
       var splice = data.splice(0, this.state.nSamples);
-      genDict[i] = splice;
+      genDict[texture] = splice;
     }
     this.setState({
       genDict: genDict,
@@ -359,9 +361,16 @@ class App extends Component {
 
   async generate() {
     this.log('GENERATING IMAGES');
-    this.setState({
-      loading: true,
-    });
+    if (this.state.keepHistory) {
+      this.setState({
+        loading: true,
+      });
+    } else {
+      this.setState({
+        genDict: {},
+        loading: true,
+      });
+    }
 
     this.resize();
 
@@ -460,6 +469,12 @@ class App extends Component {
   toggleResizeSelect(e) {
     this.setState({
       resize: !this.state.resize,
+    });
+  }
+
+  toggleHistory(e) {
+    this.setState({
+      keepHistory: !this.state.keepHistory,
     });
   }
 
@@ -649,7 +664,12 @@ class App extends Component {
                 onChange={e => this.setNSamples(e)}
                 disabled={this.state.loading}
               />
-              <Checkbox label="Keep history" style={{ marginBottom: '10px' }} />
+              <Checkbox
+                label="Keep history"
+                style={{ marginBottom: '10px' }}
+                onChange={this.toggleHistory}
+                disabled={this.state.loading}
+              />
               <Checkbox label="Sort by color" />
             </div>
             <div style={controlColumnStyle}>
@@ -770,10 +790,10 @@ class App extends Component {
   }
 
   renderGridItems() {
-    return this.state.genDict.map((list, index) => (
+    return Object.keys(this.state.genDict).map((key, index) => (
       <div>
         <Header as="h4" style={{ textAlign: 'center' }}>
-          {this.state.textures[index]}
+          {key}
         </Header>
         <div
           style={{
@@ -786,7 +806,7 @@ class App extends Component {
           }}
         >
           {' '}
-          {this.renderCategory(list, index)}
+          {this.renderCategory(this.state.genDict[key], key)}
         </div>
       </div>
     ));
