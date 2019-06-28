@@ -278,8 +278,16 @@ class App extends Component {
       this.log('Set B64, Done');
       this.sendData();
     };
+
     img.src = url;
-    this.log('set new image, waiting for onload');
+
+    img.onerror = err => {
+      this.log(
+        'Error processing image for generation; perhaps try another image source?'
+      );
+    };
+
+    this.log('Set new image, waiting for onload');
     this.setState({
       progress: 0,
     });
