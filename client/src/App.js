@@ -60,23 +60,23 @@ const ocrEngineOptions = [
 
 const textureOptions = [
   {
-    value: 'paper',
+    value: 'Paper',
     text: 'Paper',
   },
   {
-    value: 'metal',
+    value: 'Metal',
     text: 'Metal',
   },
   {
-    value: 'stone',
+    value: 'Stone',
     text: 'Stone',
   },
   {
-    value: 'wood',
+    value: 'Wood',
     text: 'Wood',
   },
   {
-    value: 'fabric',
+    value: 'Fabric',
     text: 'Fabric',
   },
 ];
@@ -338,7 +338,9 @@ class App extends Component {
             input_n_style: this.state.nSamples,
             input_do_gdwct: this.state.styleTransfer,
             input_alpha: this.state.alpha,
-            input_categories: this.state.textures,
+            input_categories: this.state.textures.map(texture =>
+              texture.toLowerCase()
+            ),
           },
         ],
       }),
@@ -770,7 +772,9 @@ class App extends Component {
   renderGridItems() {
     return this.state.genDict.map((list, index) => (
       <div>
-        <Header as="h5">{this.state.textures[index]}</Header>
+        <Header as="h4" style={{ textAlign: 'center' }}>
+          {this.state.textures[index]}
+        </Header>
         <div
           style={{
             flex: 1,
