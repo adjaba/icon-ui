@@ -458,7 +458,7 @@ class App extends Component {
   saveList() {
     const myList = this.state.mySrcs.map((url, i, arr) => {
       return {
-        download: url[0],
+        download: url,
         filename: this.state.myList[i],
       };
     });
