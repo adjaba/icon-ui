@@ -322,7 +322,7 @@ class App extends Component {
     if (
       !(
         this.state.nSamples &&
-        this.state.textures &&
+        this.state.textures.length &&
         this.state.imgSrc &&
         this.state.alpha
       )
@@ -553,7 +553,7 @@ class App extends Component {
     var visible = this.state.visible;
     var position = this.state.visible.indexOf(e.target.value);
 
-    if (position > 0) {
+    if (position >= 0) {
       visible.splice(position, 1);
     } else {
       visible.push(e.target.value);
@@ -567,7 +567,7 @@ class App extends Component {
   renderFilter() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
-        <Header as="h5" fluid>
+        <Header as="h5" fluid style={{ margin: '0px', padding: '0px' }}>
           Show/Hide{' '}
         </Header>
         {Object.keys(this.state.genDict).map(texture => (
@@ -575,6 +575,7 @@ class App extends Component {
             value={texture}
             onClick={this.filter}
             active={this.state.visible.indexOf(texture) >= 0}
+            floated="right"
           >
             {' '}
             {texture}{' '}
@@ -936,6 +937,7 @@ class App extends Component {
             display: 'flex',
             flexDirection: 'column',
             flex: 1,
+            margin: '10px',
           }}
         >
           <Segment compact attached="top">
