@@ -11,6 +11,7 @@ import {
   Loader,
   Progress,
   Icon,
+  Segment,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -182,6 +183,7 @@ class App extends Component {
       genDict: {},
       progress: 0,
       keepHistory: false,
+      visible: textureOptions.map(option => option.text),
     };
 
     this.onImage = this.onImage.bind(this);
@@ -196,6 +198,7 @@ class App extends Component {
     this.generate = this.generate.bind(this);
     this.resize = this.resize.bind(this);
     this.sendData = this.sendData.bind(this);
+    this.filter = this.filter.bind(this);
   }
 
   loadData(jsonResponse) {
@@ -547,25 +550,32 @@ class App extends Component {
   }
 
   filter(e) {
-    if (e.target.style.active) {
-      e.target.style.active = false;
-      document.getElementById(e.target.value).style.display = 'block';
+    var visible = this.state.visible;
+    var position = this.state.visible.indexOf(e.target.value);
+
+    if (position > 0) {
+      visible.splice(position, 1);
     } else {
-      e.target.style.active = true;
-      document.getElementById(e.target.value).style.display = 'none';
+      visible.push(e.target.value);
     }
+
+    this.setState({
+      visible: visible,
+    });
   }
 
   renderFilter() {
     return (
-      <div
-        style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
         <Header as="h5" fluid>
           Show/Hide{' '}
         </Header>
         {Object.keys(this.state.genDict).map(texture => (
-          <Button value={texture} onClick={this.filter} active={true}>
+          <Button
+            value={texture}
+            onClick={this.filter}
+            active={this.state.visible.indexOf(texture) >= 0}
+          >
             {' '}
             {texture}{' '}
           </Button>
@@ -841,7 +851,7 @@ class App extends Component {
 
   renderGridItems() {
     return Object.keys(this.state.genDict).map((key, index) => (
-      <div id={key}>
+      <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
         </Header>
@@ -921,19 +931,31 @@ class App extends Component {
             </Button>
           </div>
         </div>
-        {this.renderFilter()}
         <div
           style={{
-            flex: 1,
-            ...gridStyle,
-            margin: 5,
-            ...borderStyle,
-            flexWrap: 0,
+            display: 'flex',
             flexDirection: 'column',
-            placeContent: 'start',
+            flex: 1,
           }}
         >
-          {this.renderGridItems()}
+          <Segment compact attached="top">
+            {' '}
+            {this.renderFilter()}{' '}
+          </Segment>
+          <Segment
+            attached
+            style={{
+              flex: 1,
+              display: 'flex',
+              ...gridStyle,
+              ...borderStyle,
+              flexWrap: 0,
+              flexDirection: 'column',
+              placeContent: 'start',
+            }}
+          >
+            {this.renderGridItems()}
+          </Segment>
         </div>
       </div>
     );
