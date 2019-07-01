@@ -4,34 +4,19 @@ import {
   Header,
   Form,
   Dropdown,
-  List,
   Checkbox,
   Input,
   Select,
-  Loader,
   Progress,
   Icon,
   Segment,
-  Label,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
-import { Slider } from 'react-semantic-ui-range';
-
-import update from 'immutability-helper';
-import { isThisISOWeek } from 'date-fns';
-import { zip } from 'rxjs';
 import { saveAs } from 'file-saver';
-import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
-import { resetWarningCache } from 'prop-types';
 
 var JSZip = require('jszip');
 var JSZipUtils = require('jszip-utils');
 
-const sectionStyle = {
-  flex: 1,
-  borderRight: 'solid 1px #ccc',
-  padding: '1em',
-};
 const borderStyle = {
   border: 'solid 1px #ccc',
 };
@@ -47,18 +32,6 @@ const gridStyle = {
   justifyContent: 'space-evenly',
   overflowY: 'auto',
 };
-
-// TODO: add options
-const ocrEngineOptions = [
-  {
-    value: 'https://a.com',
-    text: 'model A',
-  },
-  {
-    value: 'https://b.com',
-    text: 'model B',
-  },
-];
 
 const textureOptions = [
   {
@@ -197,7 +170,7 @@ class App extends Component {
     this.toggleHistory = this.toggleHistory.bind(this);
     this.inputChange = this.inputChange.bind(this);
     this.generate = this.generate.bind(this);
-    this.resize = this.resize.bind(this);
+    this.resizeAndSend = this.resizeAndSend.bind(this);
     this.sendData = this.sendData.bind(this);
     this.filter = this.filter.bind(this);
   }
@@ -252,7 +225,7 @@ class App extends Component {
     logDiv.scrollTop = logDiv.scrollHeight;
   }
 
-  async resize(height = 256, width = 256) {
+  async resizeAndSend(height = 256, width = 256) {
     this.log('Validating form inputs');
 
     try {
@@ -387,16 +360,7 @@ class App extends Component {
       });
     }
 
-    this.resize();
-
-    // let a = await resize(this.state.imgSrc);
-    // this.setState({
-    //   b64: a,
-    // });
-    // this.sendData();
-    // return resize(this.state.imgSrc).then(() => {
-    //   return this.sendData();
-    // })
+    this.resizeAndSend();
   }
 
   onImageClick(e) {
@@ -586,8 +550,6 @@ class App extends Component {
             {texture}{' '}
           </Button>
         ))}
-        {/* {Object.keys(this.state.genDict).map(texture =>
-        <Checkbox label={texture} value = {texture} defaultChecked toggle onChange={this.filter}></Checkbox>)} */}
       </div>
     );
   }
@@ -606,7 +568,7 @@ class App extends Component {
         >
           <Button.Group
             size="small"
-            style={{ margin: '10px 10px', maxHeight: '50px', flex: 1 }}
+            style={{ margin: '10px 10px', maxHeight: '50px', flex: 0 }}
           >
             <Button
               onClick={() => {
@@ -622,7 +584,6 @@ class App extends Component {
               URL
             </Button>
             <Button.Or />
-            {/* style={{height: '41.4489px'}} */}
             <Button
               onClick={() => {
                 this.setState({
@@ -738,8 +699,6 @@ class App extends Component {
               <Checkbox label="Sort by color" />
             </div>
             <div style={controlColumnStyle}>
-              {/* <Header as="h4">Translation Model</Header>
-              <select options={['modelA', 'modelB']} /> */}
               <Header as="h4" style={{ marginTop: '0px' }}>
                 Texture Transfer
               </Header>
@@ -776,11 +735,6 @@ class App extends Component {
                 }
                 disabled={this.state.loading}
               />
-              {/* <Header as="h4">Style Parameter</Header>
-              <Slider
-                color="blue"
-                settings={{ start: 0, min: 0, max: 10, step: 1 }}
-              /> */}
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4">Post Processing</Header>
