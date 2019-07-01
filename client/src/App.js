@@ -171,7 +171,6 @@ class App extends Component {
       currentImgSrc: null,
       imgSrc: null,
       myList: [],
-      mySrcs: [],
       resize: false,
       mode: null,
       imgMode: null,
@@ -399,9 +398,7 @@ class App extends Component {
 
   onImageClick(e) {
     this.setState({
-      currentImgSrc: e.target.src
-        ? [e.target.src, e.target.parentNode.id]
-        : nullImg,
+      currentImgSrc: e.target.src || nullImg,
     });
   }
 
@@ -414,15 +411,12 @@ class App extends Component {
 
   addToList() {
     const myList = this.state.myList;
-    const mySrcs = this.state.mySrcs;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = mySrcs.indexOf(currentImgSrc[0]);
+    const position = myList.indexOf(currentImgSrc);
 
     if (position < 0) {
-      mySrcs.push(currentImgSrc[0]);
-      myList.push(currentImgSrc[1]);
+      myList.push(currentImgSrc);
       this.setState({
-        mySrcs: mySrcs,
         myList: myList,
       });
     } else {
@@ -431,18 +425,15 @@ class App extends Component {
   }
 
   removeFromList() {
-    const mySrcs = this.state.mySrcs;
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = mySrcs.indexOf(currentImgSrc[0]);
+    const position = myList.indexOf(currentImgSrc);
 
     if (position < 0) {
       alert('Image not in list');
     } else {
-      mySrcs.splice(position, 1);
       myList.splice(position, 1);
       this.setState({
-        mySrcs: mySrcs,
         myList: myList,
       });
     }
@@ -450,16 +441,15 @@ class App extends Component {
 
   clearList() {
     this.setState({
-      mySrcs: [],
       myList: [],
     });
   }
 
   saveList() {
-    const myList = this.state.mySrcs.map((url, i, arr) => {
+    const myList = this.state.myList.map((url, i, arr) => {
       return {
         download: url,
-        filename: this.state.myList[i],
+        filename: document.getElementById(url).parentNode.id,
       };
     });
 
@@ -599,7 +589,7 @@ class App extends Component {
             <img
               onError={this.onImageError}
               style={stretchStyle}
-              src={this.state.imgSrc ? this.state.imgSrc : nullImg}
+              src={this.state.imgSrc || nullImg}
             />
           </div>
           <Button
@@ -784,7 +774,7 @@ class App extends Component {
 
   renderListItems() {
     const size = 75;
-    return this.state.mySrcs.map(url => (
+    return this.state.myList.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
@@ -852,9 +842,7 @@ class App extends Component {
           <div style={{ padding: 10, flex: '0 0 auto' }}>
             <img
               style={stretchStyle}
-              src={
-                this.state.currentImgSrc ? this.state.currentImgSrc[0] : nullImg
-              }
+              src={this.state.currentImgSrc || nullImg}
             />
           </div>
           <div style={{ display: 'flex', marginTop: 10 }}>
