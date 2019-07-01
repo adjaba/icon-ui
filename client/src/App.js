@@ -12,6 +12,7 @@ import {
   Progress,
   Icon,
   Segment,
+  Label,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { Slider } from 'react-semantic-ui-range';
@@ -567,7 +568,11 @@ class App extends Component {
   renderFilter() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
-        <Header as="h5" fluid style={{ margin: '0px', padding: '0px' }}>
+        <Header
+          as="h5"
+          fluid
+          style={{ margin: '0px', padding: '0px', marginRight: '5px' }}
+        >
           Show/Hide{' '}
         </Header>
         {Object.keys(this.state.genDict).map(texture => (
@@ -575,7 +580,7 @@ class App extends Component {
             value={texture}
             onClick={this.filter}
             active={this.state.visible.indexOf(texture) >= 0}
-            floated="right"
+            style={{ padding: '5px' }}
           >
             {' '}
             {texture}{' '}
@@ -940,7 +945,7 @@ class App extends Component {
             margin: '10px',
           }}
         >
-          <Segment compact attached="top">
+          <Segment compact attached="top" style={{ padding: '0.5em 1em' }}>
             {' '}
             {this.renderFilter()}{' '}
           </Segment>
