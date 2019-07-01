@@ -171,6 +171,7 @@ class App extends Component {
       currentImgSrc: null,
       imgSrc: null,
       myList: [],
+      mySrcs: [],
       resize: false,
       mode: null,
       imgMode: null,
@@ -398,7 +399,9 @@ class App extends Component {
 
   onImageClick(e) {
     this.setState({
-      currentImgSrc: e.target.src ? e.target.src : nullImg,
+      currentImgSrc: e.target.src
+        ? [e.target.src, e.target.parentNode.id]
+        : nullImg,
     });
   }
 
@@ -411,12 +414,16 @@ class App extends Component {
 
   addToList() {
     const myList = this.state.myList;
+    const mySrcs = this.state.mySrcs;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const position = mySrcs.indexOf(currentImgSrc[0]);
 
     if (position < 0) {
+      mySrcs.push(currentImgSrc[0]);
+      myList.push(currentImgSrc[1]);
       this.setState({
-        myList: myList.concat(currentImgSrc),
+        mySrcs: mySrcs,
+        myList: myList,
       });
     } else {
       alert('Image already added');
@@ -424,15 +431,18 @@ class App extends Component {
   }
 
   removeFromList() {
+    const mySrcs = this.state.mySrcs;
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const position = mySrcs.indexOf(currentImgSrc[0]);
 
     if (position < 0) {
       alert('Image not in list');
     } else {
+      mySrcs.splice(position, 1);
       myList.splice(position, 1);
       this.setState({
+        mySrcs: mySrcs,
         myList: myList,
       });
     }
@@ -440,15 +450,16 @@ class App extends Component {
 
   clearList() {
     this.setState({
+      mySrcs: [],
       myList: [],
     });
   }
 
   saveList() {
-    const myList = this.state.myList.map((url, i, arr) => {
+    const myList = this.state.mySrcs.map((url, i, arr) => {
       return {
-        download: url,
-        filename: i,
+        download: url[0],
+        filename: this.state.myList[i],
       };
     });
 
@@ -773,7 +784,7 @@ class App extends Component {
 
   renderListItems() {
     const size = 75;
-    return this.state.myList.map(url => (
+    return this.state.mySrcs.map(url => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
@@ -783,12 +794,13 @@ class App extends Component {
     ));
   }
 
-  renderCategory(list, index) {
+  renderCategory(list, key) {
     const size = 150;
-    return list.map(url => (
+    return list.map((url, index) => (
       <div
         style={{ width: size, height: size, padding: 5 }}
         onClick={e => this.onImageClick(e)}
+        id={key + index}
       >
         <img
           style={stretchStyle}
@@ -841,7 +853,7 @@ class App extends Component {
             <img
               style={stretchStyle}
               src={
-                this.state.currentImgSrc ? this.state.currentImgSrc : nullImg
+                this.state.currentImgSrc ? this.state.currentImgSrc[0] : nullImg
               }
             />
           </div>
