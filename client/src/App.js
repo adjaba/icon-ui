@@ -180,7 +180,7 @@ class App extends Component {
       alpha: null,
       styleTransfer: 0,
       generated: [],
-      genDict: [],
+      genDict: {},
       progress: 0,
       keepHistory: false,
     };
@@ -213,8 +213,20 @@ class App extends Component {
       var splice = data.splice(0, this.state.nSamples);
       genDict[texture] = splice;
     }
+
+    var prevGenDict = this.state.genDict;
+    if (Object.keys(prevGenDict)) {
+      for (const texture of Object.keys(genDict)) {
+        if (prevGenDict[texture]) {
+          prevGenDict[texture].push(...genDict[texture]);
+        } else {
+          prevGenDict[texture] = genDict[texture];
+        }
+      }
+    }
+
     this.setState({
-      genDict: genDict,
+      genDict: prevGenDict,
       loading: false,
       progress: 100,
     });
