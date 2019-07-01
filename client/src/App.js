@@ -179,7 +179,6 @@ class App extends Component {
       textures: [],
       alpha: null,
       styleTransfer: 0,
-      generated: [],
       genDict: {},
       progress: 0,
       keepHistory: false,
@@ -329,9 +328,9 @@ class App extends Component {
       throw new Error(
         'Enter all required parameters: number of samples, textures, and alpha.'
       );
-    } else if (this.state.alpha < 0) {
+    } else if (parseFloat(this.state.alpha) < 0) {
       throw new Error('Below minimum alpha (0.0)');
-    } else if (this.state.alpha > 2) {
+    } else if (parseFloat(this.state.alpha) > 2) {
       throw new Error('Above maximum alpha (2.0)');
     }
   }
@@ -351,7 +350,7 @@ class App extends Component {
             input_real_img_bytes: { b64: this.state.b64 },
             input_n_style: this.state.nSamples,
             input_do_gdwct: this.state.styleTransfer,
-            input_alpha: this.state.alpha,
+            input_alpha: parseFloat(this.state.alpha),
             input_categories: this.state.textures.map(texture =>
               texture.toLowerCase()
             ),
@@ -526,10 +525,9 @@ class App extends Component {
         'Number of Samples entered out of bounds (0.0 - 2.0). Please reenter.'
       );
       e.target.value = this.state.alpha;
-      // throw new Error('Number of Samples entered out of bounds (1 - 25)');
     } else {
       this.setState({
-        alpha: parseFloat(e.target.value),
+        alpha: parseFloat(e.target.value).toString(),
       });
     }
   }
@@ -547,6 +545,37 @@ class App extends Component {
       });
     }
   }
+
+  filter(e) {
+    if (e.target.style.active) {
+      e.target.style.active = false;
+      document.getElementById(e.target.value).style.display = 'block';
+    } else {
+      e.target.style.active = true;
+      document.getElementById(e.target.value).style.display = 'none';
+    }
+  }
+
+  renderFilter() {
+    return (
+      <div
+        style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}
+      >
+        <Header as="h5" fluid>
+          Show/Hide{' '}
+        </Header>
+        {Object.keys(this.state.genDict).map(texture => (
+          <Button value={texture} onClick={this.filter} active={true}>
+            {' '}
+            {texture}{' '}
+          </Button>
+        ))}
+        {/* {Object.keys(this.state.genDict).map(texture =>
+        <Checkbox label={texture} value = {texture} defaultChecked toggle onChange={this.filter}></Checkbox>)} */}
+      </div>
+    );
+  }
+
   renderControls() {
     return (
       <div style={{ display: 'flex', flexDirection: 'row' }}>
@@ -569,17 +598,24 @@ class App extends Component {
                   mode: fileInputs.properties[fileInputs.URL].name,
                 });
               }}
+              active={
+                this.state.mode === fileInputs.properties[fileInputs.URL].name
+              }
             >
               <Icon name="linkify" />
               URL
             </Button>
             <Button.Or />
+            {/* style={{height: '41.4489px'}} */}
             <Button
               onClick={() => {
                 this.setState({
                   mode: fileInputs.properties[fileInputs.image].name,
                 });
               }}
+              active={
+                this.state.mode === fileInputs.properties[fileInputs.image].name
+              }
             >
               <Icon name="upload" />
               Disk
@@ -805,7 +841,7 @@ class App extends Component {
 
   renderGridItems() {
     return Object.keys(this.state.genDict).map((key, index) => (
-      <div>
+      <div id={key}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
         </Header>
@@ -814,6 +850,7 @@ class App extends Component {
             flex: 1,
             ...gridStyle,
             margin: 5,
+            padding: 5,
             display: 'flex',
             overflowY: 0,
             borderBottom: 'solid 1px #ccc',
@@ -884,6 +921,7 @@ class App extends Component {
             </Button>
           </div>
         </div>
+        {this.renderFilter()}
         <div
           style={{
             flex: 1,
