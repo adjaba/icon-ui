@@ -584,6 +584,7 @@ class App extends Component {
               URL
             </Button>
             <Button.Or />
+            {/* style={{height: '41.4489px'}} */}
             <Button
               onClick={() => {
                 this.setState({
@@ -891,6 +892,7 @@ class App extends Component {
             </Button>
           </div>
         </div>
+        {this.renderFilter()}
         <div
           style={{
             display: 'flex',
