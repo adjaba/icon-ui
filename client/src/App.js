@@ -272,9 +272,13 @@ class App extends Component {
     img.src = url;
 
     img.onerror = err => {
+      console.log(err);
       this.log(
         'Error processing image for generation; perhaps try another image source?'
       );
+      this.setState({
+        loading: false,
+      });
     };
 
     this.log('Set new image, waiting for onload');
