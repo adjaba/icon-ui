@@ -140,15 +140,14 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      img: null,
-      b64: null,
-      loading: false,
-      currentImgSrc: null,
-      imgSrc: null,
-      myList: [],
-      resize: false,
-      mode: null,
-      imgMode: null,
+      b64: null, //base64 of resized most recently submitted image
+      loading: false, // is generation ongoing
+      currentImgSrc: null, // last clicked image source among grid and list
+      imgSrc: null, // image source for generation
+      myList: [], // contains images in side list
+      resize: false, // resize generated samples option
+      mode: null, // image upload mode: url or file (hence can be toggled with during image generation)
+      imgMode: null, // generating image type: url or file
       inputSrc: null,
       nSamples: null,
       textures: [],
@@ -160,7 +159,7 @@ class App extends Component {
       visible: textureOptions.map(option => option.text),
     };
 
-    this.onImage = this.onImage.bind(this);
+    this.onLoadImage = this.onLoadImage.bind(this);
     this.loadData = this.loadData.bind(this);
     this.addToList = this.addToList.bind(this);
     this.removeFromList = this.removeFromList.bind(this);
@@ -208,15 +207,18 @@ class App extends Component {
     });
   }
 
-  onImage(e, { value }) {
+  onLoadImage(e, { value }) {
     const inputMode = this.state.mode;
     const inputSrc = this.state.inputSrc;
-    URL.revokeObjectURL(this.state.imgSrc);
 
-    this.setState({
-      imgSrc: inputSrc,
-      imgMode: inputMode,
-    });
+    if (inputSrc !== this.state.imgSrc) {
+      URL.revokeObjectURL(this.state.imgSrc);
+
+      this.setState({
+        imgSrc: inputSrc,
+        imgMode: inputMode,
+      });
+    }
   }
 
   log(string) {
@@ -242,7 +244,9 @@ class App extends Component {
     this.log('Resizing and converting input image');
 
     var url;
+    console.log(this.state.imgMode);
     if (this.state.imgMode === fileInputs.properties[fileInputs.URL].name) {
+      console.log('sending a proxy');
       url = '/api/proxy/' + this.state.imgSrc;
     } else if (
       this.state.imgMode === fileInputs.properties[fileInputs.image].name
@@ -504,17 +508,25 @@ class App extends Component {
     }
   }
 
-  async inputChange(e) {
-    if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
-      this.setState({
-        inputSrc: e.target.value,
-      });
-    } else if (
-      this.state.mode == fileInputs.properties[fileInputs.image].name
-    ) {
-      this.setState({
-        inputSrc: URL.createObjectURL(e.target.files[0]),
-      });
+  inputChange(e) {
+    if (e.target.value) {
+      if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
+        console.log('loaded image', e.target.value);
+        this.setState({
+          inputSrc: e.target.value,
+        });
+      } else if (
+        this.state.mode == fileInputs.properties[fileInputs.image].name
+      ) {
+        console.log('loaded image', e.target.value);
+        this.setState({
+          inputSrc: URL.createObjectURL(e.target.files[0]),
+        });
+      } else {
+        console.log('why am i here?');
+      }
+    } else {
+      console.log('nice try');
     }
   }
 
@@ -633,7 +645,7 @@ class App extends Component {
           <Form
             method="post"
             encType="multipart/form-data"
-            onSubmit={this.onImage}
+            onSubmit={this.onLoadImage}
           >
             <Form.Input
               action={
@@ -642,6 +654,7 @@ class App extends Component {
                   labelPosition="left"
                   icon="image"
                   content="Load Image"
+                  disabled={this.state.loading}
                 />
               }
               actionPosition="right"
@@ -658,7 +671,7 @@ class App extends Component {
                   : 'Choose an input mode to the left'
               }
               type={this.state.mode || 'text'}
-              disabled={!this.state.mode}
+              disabled={!this.state.mode || this.state.loading}
               onChange={e => this.inputChange(e)}
               accept={
                 this.state.mode == fileInputs.properties[2].name
