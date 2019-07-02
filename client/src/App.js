@@ -892,7 +892,6 @@ class App extends Component {
             </Button>
           </div>
         </div>
-        {this.renderFilter()}
         <div
           style={{
             display: 'flex',
