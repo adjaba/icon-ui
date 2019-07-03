@@ -13,6 +13,8 @@ import {
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { saveAs } from 'file-saver';
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 
 var JSZip = require('jszip');
 var JSZipUtils = require('jszip-utils');
@@ -20,6 +22,7 @@ var JSZipUtils = require('jszip-utils');
 const borderStyle = {
   border: 'solid 1px #ccc',
 };
+
 const stretchStyle = {
   height: '100%',
   width: '100%',
@@ -29,7 +32,7 @@ const gridStyle = {
   display: 'flex',
   flexWrap: 'wrap',
   alignContent: 'flex-start',
-  justifyContent: 'space-evenly',
+  justifyContent: 'flex-start',
   overflowY: 'auto',
 };
 
@@ -43,8 +46,8 @@ const textureOptions = [
     text: 'Metal',
   },
   {
-    value: 'Stone',
-    text: 'Stone',
+    value: 'Rock',
+    text: 'Rock',
   },
   {
     value: 'Wood',
@@ -92,35 +95,18 @@ const controlColumnStyle = {
   flexDirection: 'column',
   alignItems: 'center',
 };
-const fakeData = [
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/6/6b/Acid_Spray_icon.png/120px-Acid_Spray_icon.png?version=d6e54c5791d2eaf135d30dd6796fa0c4',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/7/77/Activate_Fire_Remnant_icon.png/120px-Activate_Fire_Remnant_icon.png?version=d1cd7729ceec7e99160ada0bb6f28f02',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/e/ed/Adaptive_Strike_%28Agility%29_icon.png/120px-Adaptive_Strike_%28Agility%29_icon.png?version=eb5fc59ee73df5c6d64551ea949cad45',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/7/78/Adaptive_Strike_%28Strength%29_icon.png/120px-Adaptive_Strike_%28Strength%29_icon.png?version=6815d52085a862eae20a18e942f08830',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/b/b0/Adaptive_Strike_icon.png/120px-Adaptive_Strike_icon.png?version=c33e803c01639e5a8e0fd5cca1894f76',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/e/ed/Aegis_of_the_Immortal_ability_icon.png/120px-Aegis_of_the_Immortal_ability_icon.png?version=bba2b029164d54b02c05e92b62c105c3',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/f/f1/Aftershock_icon.png/120px-Aftershock_icon.png?version=dac54ad815bdc9e045835446f1e45800',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/6/60/Aghanim%27s_Scepter_ability_icon.png/120px-Aghanim%27s_Scepter_ability_icon.png?version=bff4644617b5ad823b5b912b8a787eef',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/1/1b/Alacrity_icon.png/120px-Alacrity_icon.png?version=4b5ee01ada72cfcec3f32b679240d040',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/6/63/Anchor_Smash_icon.png/120px-Anchor_Smash_icon.png?version=f1fc1e0824fdb3ac662a9591f9c6074e',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/0/06/Ancient_Seal_icon.png/120px-Ancient_Seal_icon.png?version=fe07db15d2407e459f5d399d39cdb230',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/b/b1/Aphotic_Shield_icon.png/120px-Aphotic_Shield_icon.png?version=70bf5692e4c125905955126aa4b6d3ec',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/e/ef/Arc_Lightning_icon.png/120px-Arc_Lightning_icon.png?version=02134fd5e2b0774772e67dd4b5cd7079',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/5/5a/Arcane_Aura_icon.png/120px-Arcane_Aura_icon.png?version=1900eebe7e3a0c00811798e049e279e9',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/3/3a/Arcane_Bolt_icon.png/120px-Arcane_Bolt_icon.png?version=8d6e441dded523a125436cdb3007d655',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/d/da/Arcane_Curse_icon.png/120px-Arcane_Curse_icon.png?version=0944e37a8522556dbbb8cabe79d2b4da',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/6/68/Arcane_Orb_icon.png/120px-Arcane_Orb_icon.png?version=3fb0d082d87f03a15519931ec2a258c5',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/0/09/Arcane_Rune_buff_icon.png/120px-Arcane_Rune_buff_icon.png?version=6dd7c315ebd1f916f3b41f62aa7ffb8d',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/e/ee/Arcane_Supremacy_icon.png/120px-Arcane_Supremacy_icon.png?version=c234a6e30cde75461f8a1d5ae6fd6bb0',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/0/01/Arctic_Burn_icon.png/120px-Arctic_Burn_icon.png?version=12f340b56e80296fae41f999b0f7360f',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/8/8c/Arena_Of_Blood_icon.png/120px-Arena_Of_Blood_icon.png?version=c31e57e633d558fcae1f026779df798c',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/8/81/Armor_Corruption_icon.png/120px-Armor_Corruption_icon.png?version=50bd7ae06b33f6d7d26ab57af322c645',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/1/16/Assassinate_icon.png/120px-Assassinate_icon.png?version=67782b02e7e9e1a3bc4c12f82749ab02',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/4/42/Assimilate_icon.png/120px-Assimilate_icon.png?version=3fccdcf42c4c1bcacf109adea020900c',
-  'https://gamepedia.cursecdn.com/dota2_gamepedia/thumb/0/09/Astral_Imprisonment_icon.png/120px-Astral_Imprisonment_icon.png?version=6b00df85d6ba518740b43c1ac077b87f',
-];
 
 const nullImg = require('./images/null.JPG');
+
+const sliderMarks = {
+  25: '0.25',
+  50: '0.5',
+  75: '0.75',
+  100: '1',
+  125: '1.25',
+  150: '1.5',
+  175: '1.75',
+};
 
 var fileInputs = {
   URL: 1,
@@ -151,12 +137,13 @@ class App extends Component {
       inputSrc: null,
       nSamples: null,
       textures: [],
-      alpha: null,
+      alpha: 1.0,
       styleTransfer: 0,
       genDict: {},
       progress: 0,
       keepHistory: false,
       visible: textureOptions.map(option => option.text),
+      status: '',
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -172,6 +159,7 @@ class App extends Component {
     this.resizeAndSend = this.resizeAndSend.bind(this);
     this.sendData = this.sendData.bind(this);
     this.filter = this.filter.bind(this);
+    this.setAlpha = this.setAlpha.bind(this);
   }
 
   loadData(jsonResponse) {
@@ -204,6 +192,7 @@ class App extends Component {
       genDict: prevGenDict,
       loading: false,
       progress: 100,
+      status: 'Finished',
     });
   }
 
@@ -222,9 +211,9 @@ class App extends Component {
   }
 
   log(string) {
-    var logDiv = document.getElementById('log');
-    logDiv.innerHTML += string + '<br>';
-    logDiv.scrollTop = logDiv.scrollHeight;
+    this.setState({
+      status: string,
+    });
   }
 
   async resizeAndSend(height = 256, width = 256) {
@@ -233,14 +222,13 @@ class App extends Component {
     try {
       this.formValidation();
     } catch (err) {
-      this.log(err);
+      alert(err);
       this.setState({
         loading: false,
       });
       return;
     }
 
-    this.log('Done');
     this.log('Resizing and converting input image');
 
     var url;
@@ -277,7 +265,7 @@ class App extends Component {
 
     img.onerror = err => {
       console.log(err);
-      this.log(
+      alert(
         'Error processing image for generation; perhaps try another image source?'
       );
       this.setState({
@@ -291,14 +279,14 @@ class App extends Component {
     });
   }
 
-  checkWidth() {
-    this.log('sanity check width');
-    var i = new Image();
-    i.onload = function() {
-      alert(i.width + ', ' + i.height);
-    };
-    i.src = 'data:image/png;base64,' + this.state.b64;
-  }
+  // checkWidth() {
+  //   this.log('sanity check width');
+  //   var i = new Image();
+  //   i.onload = function() {
+  //     alert(i.width + ', ' + i.height);
+  //   };
+  //   i.src = 'data:image/png;base64,' + this.state.b64;
+  // }
 
   formValidation() {
     if (
@@ -352,11 +340,11 @@ class App extends Component {
           progress: 60,
         })
       )
-      .catch(err => this.log(err));
+      .catch(err => alert(err));
   }
 
   async generate() {
-    this.log('GENERATING IMAGES');
+    this.log('Generating images');
     if (this.state.keepHistory) {
       this.setState({
         loading: true,
@@ -365,6 +353,8 @@ class App extends Component {
       this.setState({
         genDict: {},
         loading: true,
+        myList: [],
+        currentImgSrc: '',
       });
     }
 
@@ -490,20 +480,21 @@ class App extends Component {
     }
   }
 
-  setAlpha(e) {
-    const alpha = e.target.value;
+  setAlpha(value) {
+    console.log(value);
+    const alpha = value;
     if (!alpha) {
       this.setState({
-        alpha: null,
+        alpha: 0,
       });
-    } else if (alpha > 2 || alpha < 0) {
+    } else if (alpha >= 200 || alpha <= 0) {
       alert(
-        'Number of Samples entered out of bounds (0.0 - 2.0). Please reenter.'
+        'Number of Samples entered out of bounds (0.05 - 1.95). Please reenter.'
       );
-      e.target.value = this.state.alpha;
+      value = this.state.alpha;
     } else {
       this.setState({
-        alpha: parseFloat(e.target.value).toString(),
+        alpha: parseFloat(value / 100).toString(),
       });
     }
   }
@@ -600,7 +591,6 @@ class App extends Component {
               URL
             </Button>
             <Button.Or />
-            {/* style={{height: '41.4489px'}} */}
             <Button
               onClick={() => {
                 this.setState({
@@ -730,7 +720,7 @@ class App extends Component {
                 placeholder="Select texture/s"
                 disabled={this.state.loading}
               />
-              <Header as="h4" style={{ marginTop: '10px' }}>
+              {/* <Header as="h4" style={{ marginTop: '10px' }}>
                 Alpha
               </Header>
               <Input
@@ -741,9 +731,9 @@ class App extends Component {
                 min="0"
                 onChange={e => this.setAlpha(e)}
                 disabled={this.state.loading}
-              />
+              /> */}
             </div>
-            <div style={controlColumnStyle}>
+            <div style={{ ...controlColumnStyle, marginBottom: '20px' }}>
               <Header as="h4"> Style Transfer</Header>
               <Select
                 options={styleOptions}
@@ -752,7 +742,20 @@ class App extends Component {
                   this.setState({ styleTransfer: value })
                 }
                 disabled={this.state.loading}
+                style={{ display: 'flex', flex: '1' }}
               />
+              <Header as="h4"> Alpha: {this.state.alpha} </Header>
+              <Slider
+                defaultValue={100}
+                disabled={this.state.loading}
+                step={5}
+                min={5}
+                max={195}
+                onAfterChange={this.setAlpha}
+                marks={sliderMarks}
+                style={{ display: 'flex', flex: '1' }}
+              />
+              {/* weird bug with rc-slider if step = 0.05 and max = 1.95 */}
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4">Post Processing</Header>
@@ -782,7 +785,7 @@ class App extends Component {
               marginTop: '10px',
             }}
           >
-            <Header as="h5">Progress Status </Header>
+            <Header as="h5">Progress Status: {this.state.status} </Header>
             <div style={{ marginBottom: '0px' }}>
               <Progress
                 percent={this.state.progress}
@@ -809,10 +812,14 @@ class App extends Component {
   }
 
   renderCategory(list, key) {
-    const size = 150;
     return list.map((url, index) => (
       <div
-        style={{ width: size, height: size, padding: 5 }}
+        style={{
+          display: 'flex',
+          flex: '1 1 17%',
+          padding: 5,
+          maxWidth: '20%',
+        }}
         onClick={e => this.onImageClick(e)}
         id={key + index}
       >
@@ -953,16 +960,6 @@ class App extends Component {
       >
         <div style={{ flex: '0 0 auto' }}>{this.renderControls()}</div>
         <div style={{ flex: 1, minHeight: 0 }}>{this.renderImages()}</div>
-        <div
-          style={{
-            flex: '1 1 0',
-            overflowY: 'auto',
-            margin: 5,
-            ...borderStyle,
-            maxHeight: '100px',
-          }}
-          id="log"
-        />
       </div>
     );
   }
