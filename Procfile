@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath server/src fetchImages:app
+web: cd client/src && yarn start && gunicorn --pythonpath server/src fetchImages:app
