@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"cd client && yarn start\" \"cd server && yarn start\""
+    "start": "concurrently \"cd client && yarn start\" \"cd server && cd src && py fetchImages.py\""
   },
   "dependencies": {
     "@material-ui/core": "^4.1.1",
