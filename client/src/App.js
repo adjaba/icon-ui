@@ -144,6 +144,7 @@ class App extends Component {
       keepHistory: false,
       visible: textureOptions.map(option => option.text),
       status: '',
+      lastClicked: null,
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -367,6 +368,7 @@ class App extends Component {
   onImageClick(e) {
     this.setState({
       currentImgSrc: e.target.src || nullImg,
+      lastClicked: e.target.src,
     });
   }
 
@@ -812,7 +814,12 @@ class App extends Component {
     const size = 75;
     return this.state.myList.map(url => (
       <div
-        style={{ width: size, height: size, padding: 5 }}
+        style={{
+          width: size,
+          height: size,
+          padding: 5,
+          border: this.state.lastClicked === url ? 'solid 1px #ccc' : '',
+        }}
         onClick={e => this.onImageClick(e)}
       >
         <img style={stretchStyle} src={url} key={url} />
@@ -828,6 +835,7 @@ class App extends Component {
           flex: '1 1 17%',
           padding: 5,
           maxWidth: '20%',
+          border: this.state.lastClicked === url ? 'solid 1px #ccc' : '',
         }}
         onClick={e => this.onImageClick(e)}
         id={key + index}
