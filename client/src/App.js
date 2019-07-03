@@ -193,6 +193,7 @@ class App extends Component {
       loading: false,
       progress: 100,
       status: 'Finished',
+      visible: textureOptions.map(option => option.text),
     });
   }
 
@@ -348,6 +349,7 @@ class App extends Component {
     if (this.state.keepHistory) {
       this.setState({
         loading: true,
+        status: '',
       });
     } else {
       this.setState({
@@ -355,6 +357,7 @@ class App extends Component {
         loading: true,
         myList: [],
         currentImgSrc: '',
+        status: '',
       });
     }
 
@@ -378,6 +381,11 @@ class App extends Component {
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
     const position = myList.indexOf(currentImgSrc);
+
+    if (!currentImgSrc) {
+      alert('No image selected');
+      return;
+    }
 
     if (position < 0) {
       myList.push(currentImgSrc);
@@ -548,10 +556,11 @@ class App extends Component {
         </Header>
         {Object.keys(this.state.genDict).map(texture => (
           <Button
+            className="unfocus"
             value={texture}
             onClick={this.filter}
-            active={this.state.visible.indexOf(texture) >= 0}
             style={{ padding: '5px' }}
+            positive={this.state.visible.indexOf(texture) >= 0}
           >
             {' '}
             {texture}{' '}
