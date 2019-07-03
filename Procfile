@@ -1,1 +1,1 @@
-web: gunicorn fetchImages:app
+web: gunicorn --pythonpath server/src fetchImages:app
