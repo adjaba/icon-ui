@@ -6,7 +6,7 @@ import requests
 import json
 import re
 
-app = Flask(__name__, template_folder='public')
+app = Flask(__name__, template_folder='build', static_folder='build/static')
 app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
 @app.route("/")

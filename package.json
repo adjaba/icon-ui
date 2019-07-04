@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"cd server && browserify src/index.js > public/index.js\" \"cd server && py fetchImages.py\""
+    "start": "concurrently \"cd server && yarn build\" \"cd server && py fetchImages.py\""
   },
   "dependencies": {
     "bootstrap": "^3",
