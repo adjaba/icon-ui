@@ -366,17 +366,10 @@ class App extends Component {
   }
 
   onImageClick(e) {
-    if (e.target.src === this.state.lastClicked) {
-      this.setState({
-        currentImgSrc: nullImg,
-        lastClicked: '',
-      });
-    } else {
-      this.setState({
-        currentImgSrc: e.target.src || nullImg,
-        lastClicked: e.target.src,
-      });
-    }
+    this.setState({
+      currentImgSrc: e.target.src || nullImg,
+      lastClicked: e.target.src,
+    });
   }
 
   onImageError(e) {
@@ -769,7 +762,7 @@ class App extends Component {
                 step={5}
                 min={5}
                 max={195}
-                onChange={this.setAlpha}
+                onAfterChange={this.setAlpha}
                 marks={sliderMarks}
                 style={{ display: 'flex', flex: '1' }}
               />
@@ -853,7 +846,6 @@ class App extends Component {
           key={url}
           id={url}
           alt={'load fail'}
-          onClick={e => this.onImageClick(e)}
         />
       </div>
     ));
