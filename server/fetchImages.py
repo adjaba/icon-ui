@@ -1,16 +1,17 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import flask
 import base64
 import requests
 import json
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='public')
+app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
-# @app.route("/")
-# def home():
-#     return "Hello, World!"
+@app.route("/")
+def home():
+    return render_template('index.html')
 
 """
 Expected input: 
@@ -72,4 +73,4 @@ def proxy(url):
 
 if __name__ == "__main__":
     # app.run(debug=True)
-    app.run(host='127.0.0.1', port= os.environ.get('PORT', 3001), debug=True)
+    app.run(host='127.0.0.1', port= os.environ.get('PORT', 3000), debug=True)

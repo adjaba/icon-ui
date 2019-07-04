@@ -3,11 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"cd client && yarn start\" \"cd server && cd src && python3 fetchImages.py\""
+    "start": "concurrently \"cd server && browserify src/index.js > public/index.js\" \"cd server && py fetchImages.py\""
   },
   "dependencies": {
-    "@material-ui/core": "^4.1.1",
-    "antd": "^3.20.0",
     "bootstrap": "^3",
     "concurrently": "^4.1.0",
     "file-saver": "^2.0.2",
