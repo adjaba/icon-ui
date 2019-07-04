@@ -769,7 +769,7 @@ class App extends Component {
                 step={5}
                 min={5}
                 max={195}
-                onAfterChange={this.setAlpha}
+                onChange={this.setAlpha}
                 marks={sliderMarks}
                 style={{ display: 'flex', flex: '1' }}
               />
