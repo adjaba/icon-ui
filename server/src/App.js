@@ -164,6 +164,7 @@ class App extends Component {
   }
 
   loadData(jsonResponse) {
+    console.log(this.state.b64);
     this.log('Received TF data');
     this.log('Loading received images');
     var obj = JSON.parse(jsonResponse);
@@ -253,8 +254,13 @@ class App extends Component {
 
       canvas.width = width;
       canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
+      canvas
+        .getContext('2d', { alpha: false })
+        .drawImage(img, 0, 0, width, height);
+      var data = canvas
+        .toDataURL('image/jpeg', 1.0)
+        .substring('data:image/jpeg;base64,'.length);
+      console.log(data);
       this.setState({
         b64: data,
         progress: 40,
@@ -766,7 +772,7 @@ class App extends Component {
               <Header as="h4"> Alpha: {this.state.alpha} </Header>
               <Slider
                 defaultValue={100}
-                disabled={this.state.loading}
+                disabled={this.state.loading || this.state.styleTransfer === 0}
                 step={5}
                 min={5}
                 max={195}
