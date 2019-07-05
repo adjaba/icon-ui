@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"cd server && yarn build\" \"cd server && py fetchImages.py\""
+    "windows": "concurrently \"cd server && yarn build\" \"cd server && py fetchImages.py\"",
+    "linux": "concurrently \"cd server && yarn build\" \"cd server && python3 fetchImages.py\""
   },
   "dependencies": {
     "bootstrap": "^3",
