@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import flask
 import base64
 import requests
@@ -13,6 +13,9 @@ app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 def home():
     return render_template('index.html')
 
+@app.route('/<path:path>')
+def redirectToHome(path):
+    return redirect(url_for("home"))
 """
 Expected input: 
 {
