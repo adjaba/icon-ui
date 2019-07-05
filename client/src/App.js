@@ -164,6 +164,7 @@ class App extends Component {
   }
 
   loadData(jsonResponse) {
+    console.log(this.state.b64);
     this.log('Received TF data');
     this.log('Loading received images');
     var obj = JSON.parse(jsonResponse);
@@ -253,8 +254,13 @@ class App extends Component {
 
       canvas.width = width;
       canvas.height = height;
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
+      canvas
+        .getContext('2d', { alpha: false })
+        .drawImage(img, 0, 0, width, height);
+      var data = canvas
+        .toDataURL('image/jpeg', 1.0)
+        .substring('data:image/jpeg;base64,'.length);
+      console.log(data);
       this.setState({
         b64: data,
         progress: 40,
@@ -368,7 +374,7 @@ class App extends Component {
   onImageClick(e) {
     if (e.target.src === this.state.lastClicked) {
       this.setState({
-        currentImgSrc: nullImg,
+        currentImgSrc: null,
         lastClicked: '',
       });
     } else {
@@ -391,7 +397,7 @@ class App extends Component {
     const currentImgSrc = this.state.currentImgSrc;
     const position = myList.indexOf(currentImgSrc);
 
-    if (!currentImgSrc) {
+    if (!currentImgSrc || currentImgSrc === nullImg) {
       alert('No image selected');
       return;
     }
@@ -585,15 +591,16 @@ class App extends Component {
         <div
           style={{
             flex: '0 0 auto',
-            width: 191.8,
+            width: 250,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-around',
+            alignItems: 'stretch',
           }}
         >
           <Button.Group
             size="small"
-            style={{ margin: '10px 10px', maxHeight: '50px', flex: 0 }}
+            style={{ margin: '10px 5px', maxHeight: '50px', flex: 0 }}
           >
             <Button
               onClick={() => {
@@ -623,7 +630,7 @@ class App extends Component {
               Disk
             </Button>
           </Button.Group>
-          <div style={{ height: 191.8, width: 191.8, padding: 10 }}>
+          <div style={{ height: 250, width: 250, padding: 10 }}>
             <img
               onError={this.onImageError}
               style={stretchStyle}
@@ -633,7 +640,7 @@ class App extends Component {
           <Button
             type="submit"
             primary
-            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+            style={{ margin: '5px', maxHeight: '50px', flex: 1 }}
             onClick={this.generate}
             loading={this.state.loading}
             disabled={this.state.loading}
@@ -701,7 +708,7 @@ class App extends Component {
                 flexGrow: 0,
                 flexShrink: 1,
                 flexBasis: 'auto',
-                width: '200px',
+                width: '135px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -765,7 +772,7 @@ class App extends Component {
               <Header as="h4"> Alpha: {this.state.alpha} </Header>
               <Slider
                 defaultValue={100}
-                disabled={this.state.loading}
+                disabled={this.state.loading || this.state.styleTransfer === 0}
                 step={5}
                 min={5}
                 max={195}
@@ -896,13 +903,13 @@ class App extends Component {
             paddingBottom: 10,
           }}
         >
-          <div style={{ padding: 10, flex: '0 0 auto' }}>
+          <div style={{ padding: 10, flex: '0 0 auto', height: 250 }}>
             <img
               style={stretchStyle}
               src={this.state.currentImgSrc || nullImg}
             />
           </div>
-          <div style={{ display: 'flex', marginTop: 10 }}>
+          <div style={{ display: 'flex' }}>
             <Button
               style={{ flex: 1 }}
               onClick={() => {
@@ -963,6 +970,7 @@ class App extends Component {
               flexWrap: 0,
               flexDirection: 'column',
               placeContent: 'start',
+              padding: 0,
             }}
           >
             {this.renderGridItems()}
