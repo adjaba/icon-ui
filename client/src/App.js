@@ -716,7 +716,7 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {/* {this.state.genDict? Object.keys(this.state.genDict[Object.keys(this.state.genDict)[0]]).map(texture => (
+        {Object.keys(this.state.showDict).map(texture => (
           <Button
             className="unfocus"
             value={texture}
@@ -727,7 +727,7 @@ class App extends Component {
             {' '}
             {texture}{' '}
           </Button>
-        )) : null} */}
+        ))}
       </div>
     );
   }
