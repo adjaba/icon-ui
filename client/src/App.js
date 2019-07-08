@@ -621,58 +621,53 @@ class App extends Component {
         return Promise.all(list).then(function(list) {
           showDict[texture] = list;
         });
-        // showDict[texture] = Promise.all(list)
-        // .then(function(list) {
-        //   showDict[texture] = list;
-        // });
       });
       return Promise.all(list2).then(function(list) {
         return showDict;
       });
     } else {
-      return {};
-      // const blend1 = genDict[1.0];
-      // const blend2 = genDict[2.0];
+      if (!(1 in genDict && 2 in genDict)) {
+        return {};
+      }
+      const blend1 = genDict[1.0];
+      const blend2 = genDict[2.0];
 
-      // //sanity check
-      // if (blend1.length !== blend2.length) {
-      //   throw new Error(
-      //     'Sanity check fail: genDict values for vars not of equal length'
-      //   );
-      // }
+      //sanity check
+      if (Object.keys(blend1).length !== Object.keys(blend2).length) {
+        throw new Error(
+          'Sanity check fail: genDict values for vars not of equal length'
+        );
+      }
 
-      // Object.keys(blend1).forEach(function(texture) {
-      //   showDict[texture] = blend1[texture].map((img1, index) => {
-      //     var canvas = document.createElement('CANVAS');
-      //     canvas.width = img1.width;
-      //     canvas.height = img1.height;
-      //     var ctx = canvas.getContext('2d');
-      //     var loaded1 = false;
-      //     var loaded2 = false;
+      const list2 = Object.keys(blend1).map(function(texture) {
+        const list = blend1[texture].map((img1, index) => {
+          var canvas = document.createElement('CANVAS');
+          canvas.width = img1.width;
+          canvas.height = img1.height;
+          var ctx = canvas.getContext('2d');
 
-      //     const image1 = new Image();
-      //     image1.onload = () => {
-      //       ctx.globalAlpha = 2 - newAlpha;
-      //       ctx.drawImage(image1, 0, 0, canvas.width, canvas.height);
-      //       loaded1 = true;
-      //       onLoaded(loaded1, loaded2);
-      //     }
-      //     image1.src = img1;
-
-      //     const image2 = new Image();
-      //     image2.onload = () => {
-      //       ctx.globalAlpha = newAlpha - 1;
-      //       ctx.drawImage(image2, 0, 0, canvas.width, canvas.height);
-      //       loaded2 = true;
-      //       onLoaded(loaded1, loaded2);
-      //     }
-      //     image2.src = blend2[texture][index];
-      //   });
-      // });
-      // return showDict;
+          return Promise.all([
+            loadImage(img1),
+            loadImage(blend2[texture][index]),
+          ]).then(images => {
+            ctx.globalAlpha = 2 - newAlpha;
+            canvas.width = images[1].width;
+            canvas.height = images[1].height;
+            ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = newAlpha - 1;
+            ctx.drawImage(images[1], 0, 0, canvas.width, canvas.height);
+            var data = canvas.toDataURL();
+            return data;
+          });
+        });
+        return Promise.all(list).then(function(list) {
+          showDict[texture] = list;
+        });
+      });
+      return Promise.all(list2).then(function(list) {
+        return showDict;
+      });
     }
-    console.log('generated', newAlpha);
-    // return showDict;
   }
   inputChange(e) {
     if (e.target.value) {
