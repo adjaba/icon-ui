@@ -1,41 +1,30 @@
-# OCR UI
+# Icon UI
 
-A front-end for the OCR models.
-
-![](./ocr-ui.png)
+A front-end for Icon UI image translation and game style transfer models.
 
 ## Development
+
+### Unified
 
 Install node.js (>= 10.x) and yarn. Then install the node modules:
 
 ```bash
-cd client
-yarn install
-cd ..
 cd server
 yarn install
 cd ..
 yarn install
 ```
 
-Run the development mode:
+Run the development mode ([OS] = windows for Windows OS and linux for Linux/Ubuntu):
 
 ```bash
-yarn start
+yarn [OS]
 ```
 
-## Docker Deployment
-
-Build the container:
+example:
 
 ```bash
-docker build -t imslavko/ocr-ui .
+yarn linux
 ```
 
-Run attaching the mounts:
-
-```bash
-docker run -p 5000:3000 -u $(id -u):$(id -g) -d imslavko/ocr-ui
-```
-
-Access the site at `localhost:5000`.
+Access the site at `localhost:3000`.
