@@ -211,6 +211,7 @@ class App extends Component {
       progress: 100,
       status: 'Finished',
       visible: textureOptions.map(option => option.text),
+      showDict: this.generateBlend(this.state.alpha),
     });
   }
 
@@ -536,22 +537,19 @@ class App extends Component {
       //   : {},
       this.setState({
         alpha: newAlpha,
+        showDict: this.generateBlend(newAlpha),
       });
     }
   }
 
   generateBlend(newAlpha) {
+    console.log('generating blend');
     function loadImage(url) {
       return new Promise((fulfill, reject) => {
         let imageObj = new Image();
         imageObj.onload = () => fulfill(imageObj);
         imageObj.src = url;
       });
-    }
-    function onLoaded(loaded1, loaded2, canvas) {
-      if (loaded1 && loaded2) {
-        return canvas.toDataURL();
-      }
     }
 
     const genDict = this.state.genDict;
@@ -572,7 +570,7 @@ class App extends Component {
       const blend2 = genDict[1.0];
 
       //sanity check
-      if (blend1.length !== blend2.length) {
+      if (Object.keys(blend1).length !== Object.keys(blend2).length) {
         throw new Error(
           'Sanity check fail: genDict values for vars not of equal length'
         );
@@ -1001,14 +999,15 @@ class App extends Component {
     const genDict = this.state.genDict;
     const isNotEmpty = Object.keys(genDict).length > 0;
     const isStyleTransfer = Object.keys(genDict).length > 1;
-    const showDict = isNotEmpty
-      ? isStyleTransfer
-        ? this.generateBlend(alpha)
-        : genDict[0]
-      : {};
+    // const showDict=
+    //     isNotEmpty
+    //     ? isStyleTransfer
+    //       ? this.generateBlend(alpha)
+    //       : genDict[0]
+    //     : {};
 
-    console.log('rendering', showDict);
-    return Object.keys(showDict).map((key, index) => (
+    console.log('rendering', this.state.showDict);
+    return Object.keys(this.state.showDict).map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
@@ -1025,7 +1024,7 @@ class App extends Component {
           }}
         >
           {' '}
-          {this.renderCategory(showDict[key], key)}
+          {this.renderCategory(this.state.showDict[key], key)}
         </div>
       </div>
     ));
