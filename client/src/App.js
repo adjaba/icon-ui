@@ -117,11 +117,8 @@ var fileInputs = {
   },
 };
 
-const IP = '172.20.79.104';
-const PORT = 8501;
-const MODEL_NAME = 'tsgan_gdwct';
-const endpoint =
-  'http://' + IP + ':' + PORT + '/v1/models/' + MODEL_NAME + ':predict';
+const alphas = [0.0, 1.0, 2.0];
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -137,7 +134,7 @@ class App extends Component {
       inputSrc: null,
       nSamples: null,
       textures: [],
-      alpha: 1.0,
+      alpha: 0,
       styleTransfer: 0,
       genDict: {},
       progress: 0,
@@ -145,6 +142,7 @@ class App extends Component {
       visible: textureOptions.map(option => option.text),
       status: '',
       lastClicked: null,
+      showDict: {},
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -161,37 +159,49 @@ class App extends Component {
     this.sendData = this.sendData.bind(this);
     this.filter = this.filter.bind(this);
     this.setAlpha = this.setAlpha.bind(this);
+    this.generateBlend = this.generateBlend.bind(this);
   }
 
-  loadData(jsonResponse) {
-    console.log(this.state.b64);
+  loadData(jsonResponseList, vars) {
     this.log('Received TF data');
     this.log('Loading received images');
-    var obj = JSON.parse(jsonResponse);
-    var data = obj['predictions'].map(
-      prediction =>
-        'data:image/png;base64,' +
-        prediction.replace(/-/g, '+').replace(/_/g, '/')
-    );
-    var genDict = {};
-    for (const texture of this.state.textures) {
-      var splice = data.splice(0, this.state.nSamples);
-      genDict[texture] = splice;
-    }
 
+    if (jsonResponseList.length !== vars.length) {
+      throw new Error('I should not be here');
+    }
+    var finalGenDict = {};
+    var textures = this.state.textures;
+    var nSamples = this.state.nSamples;
     var prevGenDict = this.state.genDict;
-    if (Object.keys(prevGenDict)) {
-      for (const texture of Object.keys(genDict)) {
-        if (prevGenDict[texture]) {
-          prevGenDict[texture].push(...genDict[texture]);
-        } else {
-          prevGenDict[texture] = genDict[texture];
+
+    jsonResponseList.forEach(function(jsonResponse, i) {
+      var obj = JSON.parse(jsonResponse);
+      var data = obj['predictions'].map(
+        prediction =>
+          'data:image/png;base64,' +
+          prediction.replace(/-/g, '+').replace(/_/g, '/')
+      );
+      var genDict = {};
+
+      for (const texture of textures) {
+        var splice = data.splice(0, nSamples);
+        genDict[texture] = splice;
+      }
+
+      if (Object.keys(prevGenDict)) {
+        for (const texture of Object.keys(genDict)) {
+          if (prevGenDict[texture]) {
+            prevGenDict[texture].push(...genDict[texture]);
+          } else {
+            prevGenDict[texture] = genDict[texture];
+          }
         }
       }
-    }
+      finalGenDict[vars[i]] = prevGenDict;
+    });
 
     this.setState({
-      genDict: prevGenDict,
+      genDict: finalGenDict,
       loading: false,
       progress: 100,
       status: 'Finished',
@@ -254,13 +264,10 @@ class App extends Component {
 
       canvas.width = width;
       canvas.height = height;
-      canvas
-        .getContext('2d', { alpha: false })
-        .drawImage(img, 0, 0, width, height);
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
       var data = canvas
         .toDataURL('image/jpeg', 1.0)
         .substring('data:image/jpeg;base64,'.length);
-      console.log(data);
       this.setState({
         b64: data,
         progress: 40,
@@ -298,16 +305,11 @@ class App extends Component {
 
   formValidation() {
     if (
-      !(
-        this.state.nSamples &&
-        this.state.textures.length &&
-        this.state.imgSrc &&
-        this.state.alpha
-      )
+      !(this.state.nSamples && this.state.textures.length && this.state.imgSrc)
     ) {
-      // alert ('Enter all required parameters: number of samples, textures, and alpha.')
+      // alert ('Enter all required parameters: number of samples, textures')
       throw new Error(
-        'Enter all required parameters: number of samples, textures, and alpha.'
+        'Enter all required parameters: number of samples and textures'
       );
     } else if (parseFloat(this.state.alpha) < 0) {
       throw new Error('Below minimum alpha (0.0)');
@@ -320,35 +322,39 @@ class App extends Component {
     this.log('Sending data to TF serving endpoint');
     const b64 = this.state.b64;
 
-    const resp = await fetch('/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        instances: [
-          {
-            input_real_img_bytes: { b64: this.state.b64 },
-            input_n_style: this.state.nSamples,
-            input_do_gdwct: this.state.styleTransfer,
-            input_alpha: parseFloat(this.state.alpha),
-            input_categories: this.state.textures.map(texture =>
-              texture.toLowerCase()
-            ),
+    const vars = this.state.styleTransfer ? alphas : [0];
+    const resp = await Promise.all(
+      vars.map(alpha =>
+        fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ],
-      }),
-    })
-      .then(function(data) {
-        return data.json();
-      })
-      .then(response => this.loadData(response))
+          body: JSON.stringify({
+            instances: [
+              {
+                input_real_img_bytes: { b64: this.state.b64 },
+                input_n_style: this.state.nSamples,
+                input_do_gdwct: this.state.styleTransfer,
+                input_alpha: alpha,
+                input_categories: this.state.textures.map(texture =>
+                  texture.toLowerCase()
+                ),
+              },
+            ],
+          }),
+        }).then(function(data) {
+          return data.json();
+        })
+      )
+    )
+      .then(response => this.loadData(response, vars))
       .then(
         this.setState({
           progress: 60,
         })
-      )
-      .catch(err => alert(err));
+      );
+    // .catch(err => alert(err));
   }
 
   async generate() {
@@ -504,11 +510,10 @@ class App extends Component {
   }
 
   setAlpha(value) {
-    console.log(value);
     const alpha = value;
     if (!alpha) {
       this.setState({
-        alpha: 0,
+        alpha: 1.0,
       });
     } else if (alpha >= 200 || alpha <= 0) {
       alert(
@@ -516,12 +521,67 @@ class App extends Component {
       );
       value = this.state.alpha;
     } else {
+      const newAlpha = parseFloat(value / 100);
       this.setState({
-        alpha: parseFloat(value / 100).toString(),
+        alpha: newAlpha,
+        showDict:
+          newAlpha in Object.keys(this.state.genDict)
+            ? this.state.genDict[newAlpha]
+            : this.generateBlend(newAlpha),
       });
     }
   }
 
+  generateBlend(newAlpha) {
+    const genDict = this.state.genDict;
+
+    if (genDict.length === 0) {
+      return;
+    }
+
+    if (newAlpha in genDict) {
+      return genDict[newAlpha];
+    }
+
+    if (newAlpha < 1) {
+      const blend1 = genDict[0.05];
+      const blend2 = genDict[1.0];
+
+      //sanity check
+      if (blend1.length !== blend2.length) {
+        throw new Error(
+          'Sanity check fail: genDict values for vars not of equal length'
+        );
+      }
+      Object.keys(blend1).forEach(function(texture) {
+        blend1[texture].map((img1, index) => {
+          const img = new Image();
+          img.onload = () => {
+            var canvas = document.createElement('CANVAS');
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            var ctx = canvas.getContext('2d');
+            ctx.globalAlpha = (1 - newAlpha) / 0.95;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1 - (1 - newAlpha) / 0.95;
+            console.log(blend2[texture][index]);
+            ctx.drawImage(
+              blend2[texture][index],
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+            var data = canvas.toDataURL();
+            console.log(data);
+          };
+          img.src = img1;
+        });
+      });
+    } else {
+    }
+  }
   inputChange(e) {
     if (e.target.value) {
       if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
@@ -569,7 +629,7 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.genDict).map(texture => (
+        {/* {this.state.genDict? Object.keys(this.state.genDict[Object.keys(this.state.genDict)[0]]).map(texture => (
           <Button
             className="unfocus"
             value={texture}
@@ -580,7 +640,7 @@ class App extends Component {
             {' '}
             {texture}{' '}
           </Button>
-        ))}
+        )) : null} */}
       </div>
     );
   }
@@ -764,7 +824,10 @@ class App extends Component {
                 options={styleOptions}
                 defaultValue={0}
                 onChange={(e, { value }) =>
-                  this.setState({ styleTransfer: value })
+                  this.setState({
+                    styleTransfer: value,
+                    alpha: value ? 1.0 : 0,
+                  })
                 }
                 disabled={this.state.loading}
                 style={{ display: 'flex', flex: '1' }}
@@ -842,6 +905,7 @@ class App extends Component {
   }
 
   renderCategory(list, key) {
+    console.log(list);
     return list.map((url, index) => (
       <div
         style={{
@@ -867,7 +931,16 @@ class App extends Component {
   }
 
   renderGridItems() {
-    return Object.keys(this.state.genDict).map((key, index) => (
+    const alpha = this.state.alpha;
+    const genDict = this.state.genDict;
+    const isNotEmpty = Object.keys(genDict).length > 0;
+    const isStyleTransfer = Object.keys(genDict).length > 1;
+    const showDict = isNotEmpty
+      ? isStyleTransfer
+        ? this.generateBlend(alpha)
+        : genDict[0]
+      : {};
+    return Object.keys(showDict).map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
@@ -884,7 +957,7 @@ class App extends Component {
           }}
         >
           {' '}
-          {this.renderCategory(this.state.genDict[key], key)}
+          {this.renderCategory(showDict[key], key)}
         </div>
       </div>
     ));
