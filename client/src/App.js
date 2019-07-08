@@ -169,7 +169,7 @@ class App extends Component {
     if (jsonResponseList.length !== vars.length) {
       throw new Error('I should not be here');
     }
-    var finalGenDict = {};
+    // var finalGenDict = {};
     var textures = this.state.textures;
     var nSamples = this.state.nSamples;
     var prevGenDict = this.state.genDict;
@@ -190,18 +190,23 @@ class App extends Component {
 
       if (Object.keys(prevGenDict)) {
         for (const texture of Object.keys(genDict)) {
-          if (prevGenDict[texture]) {
-            prevGenDict[texture].push(...genDict[texture]);
+          if (prevGenDict[vars[i]]) {
+            if (texture in prevGenDict[vars[i]]) {
+              prevGenDict[vars[i]][texture].push(...genDict[texture]);
+            } else {
+              prevGenDict[vars[i]][texture] = genDict[texture];
+            }
           } else {
-            prevGenDict[texture] = genDict[texture];
+            prevGenDict[vars[i]] = {};
+            prevGenDict[vars[i]][texture] = genDict[texture];
           }
         }
       }
-      finalGenDict[vars[i]] = prevGenDict;
+      // finalGenDict[vars[i]] = prevGenDict;
     });
 
     this.setState({
-      genDict: finalGenDict,
+      genDict: prevGenDict,
       loading: false,
       progress: 100,
       status: 'Finished',
@@ -509,7 +514,7 @@ class App extends Component {
     }
   }
 
-  setAlpha(value) {
+  async setAlpha(value) {
     const alpha = value;
     if (!alpha) {
       this.setState({
@@ -522,29 +527,48 @@ class App extends Component {
       value = this.state.alpha;
     } else {
       const newAlpha = parseFloat(value / 100);
+
+      // showDict:
+      //   isNotEmpty
+      //   ? isStyleTransfer
+      //     ? await this.generateBlend(newAlpha)
+      //     : genDict[0]
+      //   : {},
       this.setState({
         alpha: newAlpha,
-        showDict:
-          newAlpha in Object.keys(this.state.genDict)
-            ? this.state.genDict[newAlpha]
-            : this.generateBlend(newAlpha),
       });
     }
   }
 
   generateBlend(newAlpha) {
+    function loadImage(url) {
+      return new Promise((fulfill, reject) => {
+        let imageObj = new Image();
+        imageObj.onload = () => fulfill(imageObj);
+        imageObj.src = url;
+      });
+    }
+    function onLoaded(loaded1, loaded2, canvas) {
+      if (loaded1 && loaded2) {
+        return canvas.toDataURL();
+      }
+    }
+
     const genDict = this.state.genDict;
+    var showDict = {};
 
     if (genDict.length === 0) {
-      return;
-    }
-
-    if (newAlpha in genDict) {
-      return genDict[newAlpha];
-    }
-
-    if (newAlpha < 1) {
-      const blend1 = genDict[0.05];
+      showDict = {};
+    } else if (Object.keys(genDict).length === 1) {
+      showDict = genDict[0];
+    } else if (newAlpha in genDict) {
+      console.log('hi im returning from gendict');
+      showDict = genDict[newAlpha];
+    } else if (newAlpha < 1) {
+      if (!(0 in genDict && 1 in genDict)) {
+        return;
+      }
+      const blend1 = genDict[0.0];
       const blend2 = genDict[1.0];
 
       //sanity check
@@ -553,34 +577,77 @@ class App extends Component {
           'Sanity check fail: genDict values for vars not of equal length'
         );
       }
-      Object.keys(blend1).forEach(function(texture) {
-        blend1[texture].map((img1, index) => {
-          const img = new Image();
-          img.onload = () => {
-            var canvas = document.createElement('CANVAS');
 
-            canvas.width = img.width;
-            canvas.height = img.height;
-            var ctx = canvas.getContext('2d');
-            ctx.globalAlpha = (1 - newAlpha) / 0.95;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 1 - (1 - newAlpha) / 0.95;
-            console.log(blend2[texture][index]);
-            ctx.drawImage(
-              blend2[texture][index],
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
+      Object.keys(blend1).forEach(function(texture) {
+        const list = blend1[texture].map((img1, index) => {
+          var canvas = document.createElement('CANVAS');
+          canvas.width = img1.width;
+          canvas.height = img1.height;
+          var ctx = canvas.getContext('2d');
+
+          return Promise.all([
+            loadImage(img1),
+            loadImage(blend2[texture][index]),
+          ]).then(images => {
+            ctx.globalAlpha = 1 - newAlpha;
+            canvas.width = images[1].width;
+            canvas.height = images[1].height;
+            ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = newAlpha;
+            ctx.drawImage(images[1], 0, 0, canvas.width, canvas.height);
             var data = canvas.toDataURL();
-            console.log(data);
-          };
-          img.src = img1;
+            return data;
+          });
+        });
+
+        Promise.all(list).then(function(list) {
+          console.log(texture);
+          showDict[texture] = list;
         });
       });
     } else {
+      return {};
+      // const blend1 = genDict[1.0];
+      // const blend2 = genDict[2.0];
+
+      // //sanity check
+      // if (blend1.length !== blend2.length) {
+      //   throw new Error(
+      //     'Sanity check fail: genDict values for vars not of equal length'
+      //   );
+      // }
+
+      // Object.keys(blend1).forEach(function(texture) {
+      //   showDict[texture] = blend1[texture].map((img1, index) => {
+      //     var canvas = document.createElement('CANVAS');
+      //     canvas.width = img1.width;
+      //     canvas.height = img1.height;
+      //     var ctx = canvas.getContext('2d');
+      //     var loaded1 = false;
+      //     var loaded2 = false;
+
+      //     const image1 = new Image();
+      //     image1.onload = () => {
+      //       ctx.globalAlpha = 2 - newAlpha;
+      //       ctx.drawImage(image1, 0, 0, canvas.width, canvas.height);
+      //       loaded1 = true;
+      //       onLoaded(loaded1, loaded2);
+      //     }
+      //     image1.src = img1;
+
+      //     const image2 = new Image();
+      //     image2.onload = () => {
+      //       ctx.globalAlpha = newAlpha - 1;
+      //       ctx.drawImage(image2, 0, 0, canvas.width, canvas.height);
+      //       loaded2 = true;
+      //       onLoaded(loaded1, loaded2);
+      //     }
+      //     image2.src = blend2[texture][index];
+      //   });
+      // });
+      // return showDict;
     }
+    return showDict;
   }
   inputChange(e) {
     if (e.target.value) {
@@ -905,7 +972,6 @@ class App extends Component {
   }
 
   renderCategory(list, key) {
-    console.log(list);
     return list.map((url, index) => (
       <div
         style={{
@@ -940,6 +1006,8 @@ class App extends Component {
         ? this.generateBlend(alpha)
         : genDict[0]
       : {};
+
+    console.log('rendering', showDict);
     return Object.keys(showDict).map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
