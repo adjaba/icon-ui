@@ -142,7 +142,7 @@ class App extends Component {
       visible: textureOptions.map(option => option.text),
       status: '',
       lastClicked: null,
-      showDict: {},
+      showDict: Object(),
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -161,6 +161,17 @@ class App extends Component {
     this.setAlpha = this.setAlpha.bind(this);
     this.generateBlend = this.generateBlend.bind(this);
   }
+
+  // componentDidUpdate(prevProps, prevState) {
+  //   if (prevState['alpha'] === this.state.alpha){
+  //     return
+  //   }
+  //   this.generateBlend(this.state.alpha).then((showDict) =>
+  //     this.setState({
+  //       showDict: showDict,
+  //     })
+  //   );
+  // }
 
   loadData(jsonResponseList, vars) {
     this.log('Received TF data');
@@ -205,14 +216,16 @@ class App extends Component {
       // finalGenDict[vars[i]] = prevGenDict;
     });
 
-    this.setState({
-      genDict: prevGenDict,
-      loading: false,
-      progress: 100,
-      status: 'Finished',
-      visible: textureOptions.map(option => option.text),
-      showDict: this.generateBlend(this.state.alpha),
-    });
+    this.generateBlend(this.state.alpha).then(showDict =>
+      this.setState({
+        genDict: prevGenDict,
+        loading: false,
+        progress: 100,
+        status: 'Finished',
+        visible: textureOptions.map(option => option.text),
+        showDict: showDict,
+      })
+    );
   }
 
   onLoadImage(e, { value }) {
@@ -535,14 +548,19 @@ class App extends Component {
       //     ? await this.generateBlend(newAlpha)
       //     : genDict[0]
       //   : {},
-      this.setState({
-        alpha: newAlpha,
-        showDict: this.generateBlend(newAlpha),
-      });
+      this.generateBlend(newAlpha).then(showDict =>
+        this.setState({
+          alpha: newAlpha,
+          showDict: showDict,
+        })
+      );
+      // this.setState({
+      //   alpha: newAlpha,
+      // });
     }
   }
 
-  generateBlend(newAlpha) {
+  async generateBlend(newAlpha) {
     console.log('generating blend');
     function loadImage(url) {
       return new Promise((fulfill, reject) => {
@@ -557,14 +575,17 @@ class App extends Component {
 
     if (genDict.length === 0) {
       showDict = {};
+      return {};
     } else if (Object.keys(genDict).length === 1) {
       showDict = genDict[0];
+      return genDict[0];
     } else if (newAlpha in genDict) {
       console.log('hi im returning from gendict');
       showDict = genDict[newAlpha];
+      return genDict[newAlpha];
     } else if (newAlpha < 1) {
       if (!(0 in genDict && 1 in genDict)) {
-        return;
+        return {};
       }
       const blend1 = genDict[0.0];
       const blend2 = genDict[1.0];
@@ -576,7 +597,7 @@ class App extends Component {
         );
       }
 
-      Object.keys(blend1).forEach(function(texture) {
+      const list2 = Object.keys(blend1).map(function(texture) {
         const list = blend1[texture].map((img1, index) => {
           var canvas = document.createElement('CANVAS');
           canvas.width = img1.width;
@@ -597,11 +618,16 @@ class App extends Component {
             return data;
           });
         });
-
-        Promise.all(list).then(function(list) {
-          console.log(texture);
+        return Promise.all(list).then(function(list) {
           showDict[texture] = list;
         });
+        // showDict[texture] = Promise.all(list)
+        // .then(function(list) {
+        //   showDict[texture] = list;
+        // });
+      });
+      return Promise.all(list2).then(function(list) {
+        return showDict;
       });
     } else {
       return {};
@@ -645,7 +671,8 @@ class App extends Component {
       // });
       // return showDict;
     }
-    return showDict;
+    console.log('generated', newAlpha);
+    // return showDict;
   }
   inputChange(e) {
     if (e.target.value) {
