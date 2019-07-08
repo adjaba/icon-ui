@@ -2,7 +2,6 @@ version: "3.3"
 services:
   server:
     build: .
-    image: imslavko/ocr-ui:latest
-    user: ${CURRENT_UID}
+    image: moono/icon-ui:latest
     ports:
-      - "5000:3000"
+      - "35001:3000"
