@@ -126,6 +126,7 @@ class App extends Component {
       b64: null, //base64 of resized most recently submitted image
       loading: false, // is generation ongoing
       currentImgSrc: null, // last clicked image source among grid and list
+      currentImgName: null,
       imgSrc: null, // image source for generation
       myList: [], // contains images in side list
       resize: false, // resize generated samples option
@@ -389,6 +390,7 @@ class App extends Component {
         loading: true,
         myList: [],
         currentImgSrc: '',
+        currentImgName: null,
         status: '',
       });
     }
@@ -400,11 +402,17 @@ class App extends Component {
     if (e.target.src === this.state.lastClicked) {
       this.setState({
         currentImgSrc: null,
+        currentImgName: null,
         lastClicked: '',
       });
     } else {
+      const alpha = this.state.alpha;
+      console.log(e.target.src);
       this.setState({
         currentImgSrc: e.target.src || nullImg,
+        currentImgName: e.target.src
+          ? alpha + document.getElementById(e.target.src).parentNode.id
+          : null,
         lastClicked: e.target.src,
       });
     }
@@ -420,7 +428,8 @@ class App extends Component {
   addToList() {
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const currentImgName = this.state.currentImgName;
+    const position = myList.map(tuple => tuple[0]).indexOf(currentImgSrc);
 
     if (!currentImgSrc || currentImgSrc === nullImg) {
       alert('No image selected');
@@ -428,7 +437,7 @@ class App extends Component {
     }
 
     if (position < 0) {
-      myList.push(currentImgSrc);
+      myList.push([currentImgSrc, currentImgName]);
       this.setState({
         myList: myList,
       });
@@ -440,7 +449,7 @@ class App extends Component {
   removeFromList() {
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const position = myList.map(tuple => tuple[0]).indexOf(currentImgSrc);
 
     if (position < 0) {
       alert('Image not in list');
@@ -461,8 +470,8 @@ class App extends Component {
   saveList() {
     const myList = this.state.myList.map((url, i, arr) => {
       return {
-        download: url,
-        filename: document.getElementById(url).parentNode.id,
+        download: url[0],
+        filename: url[1],
       };
     });
 
@@ -976,22 +985,22 @@ class App extends Component {
 
   renderListItems() {
     const size = 75;
-    return this.state.myList.map(url => (
+    return this.state.myList.map(urlName => (
       <div
         style={{
           width: size,
           height: size,
           padding: 5,
-          border: this.state.lastClicked === url ? 'solid 1px #ccc' : '',
+          border: this.state.lastClicked === urlName[0] ? 'solid 1px #ccc' : '',
         }}
         onClick={e => this.onImageClick(e)}
       >
-        <img style={stretchStyle} src={url} key={url} />
+        <img style={stretchStyle} src={urlName[0]} key={urlName[0]} />
       </div>
     ));
   }
 
-  renderCategory(list, key) {
+  renderCategory(list, key, alpha) {
     return list.map((url, index) => (
       <div
         style={{
@@ -1046,7 +1055,7 @@ class App extends Component {
           }}
         >
           {' '}
-          {this.renderCategory(this.state.showDict[key], key)}
+          {this.renderCategory(this.state.showDict[key], key, alpha)}
         </div>
       </div>
     ));
