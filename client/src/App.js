@@ -94,6 +94,7 @@ const controlColumnStyle = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  padding: '5px',
 };
 
 const nullImg = require('./images/null.JPG');
@@ -329,7 +330,7 @@ class App extends Component {
     ) {
       // alert ('Enter all required parameters: number of samples, textures')
       throw new Error(
-        'Enter all required parameters: number of samples and textures'
+        'Enter all required parameters: input image, number of samples and textures'
       );
     } else if (parseFloat(this.state.alpha) < 0) {
       throw new Error('Below minimum alpha (0.0)');
@@ -342,7 +343,7 @@ class App extends Component {
     this.log('Sending data to TF serving endpoint');
     const b64 = this.state.b64;
 
-    const vars = this.state.styleTransfer ? alphas : [0];
+    const vars = alphas;
     const resp = await Promise.all(
       vars.map(alpha =>
         fetch('/api/generate', {
@@ -355,7 +356,7 @@ class App extends Component {
               {
                 input_real_img_bytes: { b64: this.state.b64 },
                 input_n_style: this.state.nSamples,
-                input_do_gdwct: this.state.styleTransfer,
+                input_do_gdwct: 1,
                 input_alpha: alpha,
                 input_categories: this.state.textures.map(texture =>
                   texture.toLowerCase()
@@ -373,8 +374,8 @@ class App extends Component {
         this.setState({
           progress: 60,
         })
-      );
-    // .catch(err => alert(err));
+      )
+      .catch(err => alert(err));
   }
 
   async generate() {
@@ -541,12 +542,10 @@ class App extends Component {
     const alpha = value;
     if (!alpha) {
       this.setState({
-        alpha: 1.0,
+        alpha: 0.0,
       });
-    } else if (alpha >= 200 || alpha <= 0) {
-      alert(
-        'Number of Samples entered out of bounds (0.05 - 1.95). Please reenter.'
-      );
+    } else if (alpha > 200 || alpha < 0) {
+      alert('Alpha entered out of bounds (0.0 - 2.0). Please reenter.');
       value = this.state.alpha;
     } else {
       const newAlpha = parseFloat(value / 100);
@@ -566,7 +565,16 @@ class App extends Component {
       // this.setState({
       //   alpha: newAlpha,
       // });
+      this.setShowdict(newAlpha);
     }
+  }
+
+  setShowdict(newAlpha) {
+    this.generateBlend(newAlpha).then(showDict =>
+      this.setState({
+        showDict: showDict,
+      })
+    );
   }
 
   async generateBlend(newAlpha) {
@@ -864,7 +872,7 @@ class App extends Component {
                 flexGrow: 0,
                 flexShrink: 1,
                 flexBasis: 'auto',
-                width: '135px',
+                width: '145px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -915,7 +923,7 @@ class App extends Component {
               /> */}
             </div>
             <div style={{ ...controlColumnStyle, marginBottom: '20px' }}>
-              <Header as="h4"> Style Transfer</Header>
+              {/* <Header as="h4"> Style Transfer</Header>
               <Select
                 options={styleOptions}
                 defaultValue={0}
@@ -927,17 +935,17 @@ class App extends Component {
                 }
                 disabled={this.state.loading}
                 style={{ display: 'flex', flex: '1' }}
-              />
+              /> */}
               <Header as="h4"> Alpha: {this.state.alpha} </Header>
               <Slider
-                defaultValue={100}
-                disabled={this.state.loading || this.state.styleTransfer === 0}
+                defaultValue={0}
+                disabled={this.state.loading}
                 step={5}
-                min={5}
-                max={195}
+                min={0}
+                max={200}
                 onChange={this.setAlpha}
                 marks={sliderMarks}
-                style={{ display: 'flex', flex: '1' }}
+                style={{ display: 'flex', flex: '0 1 0' }}
               />
               {/* weird bug with rc-slider if step = 0.05 and max = 1.95 */}
             </div>
