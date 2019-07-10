@@ -118,7 +118,11 @@ var fileInputs = {
   },
 };
 
-const alphas = [0.0, 1.0, 2.0];
+const vars = {
+  0.0: 'final_out_alpha_0',
+  1.0: 'final_out_alpha_1',
+  2.0: 'final_out_alpha_2',
+};
 
 class App extends Component {
   constructor(props) {
@@ -178,43 +182,45 @@ class App extends Component {
     }
   }
 
-  loadData(jsonResponseList, vars) {
+  loadData(jsonResponse, vars) {
     this.log('Received TF data');
     this.log('Loading received images');
-
-    if (jsonResponseList.length !== vars.length) {
-      throw new Error('I should not be here');
-    }
 
     var textures = this.state.textures;
     var nSamples = this.state.nSamples;
     var prevGenDict = this.state.genDict;
 
-    jsonResponseList.forEach(function(jsonResponse, i) {
-      var obj = JSON.parse(jsonResponse);
-      var data = obj['predictions'].map(
+    var obj = JSON.parse(jsonResponse);
+    var alphas = Object.keys(vars);
+
+    alphas.forEach(function(alpha) {
+      var rawData = obj['predictions'].map(
+        predictionObject => predictionObject[vars[alpha]]
+      );
+      var data = rawData.map(
         prediction =>
           'data:image/png;base64,' +
           prediction.replace(/-/g, '+').replace(/_/g, '/')
       );
-      var genDict = {};
+
+      var textureDict = {};
 
       for (const texture of textures) {
         var splice = data.splice(0, nSamples);
-        genDict[texture] = splice;
+        textureDict[texture] = splice;
       }
 
       if (Object.keys(prevGenDict)) {
-        for (const texture of Object.keys(genDict)) {
-          if (prevGenDict[vars[i]]) {
-            if (texture in prevGenDict[vars[i]]) {
-              prevGenDict[vars[i]][texture].push(...genDict[texture]);
+        for (const texture of Object.keys(textureDict)) {
+          if (prevGenDict[alpha]) {
+            if (texture in prevGenDict[alpha]) {
+              prevGenDict[alpha][texture].push(...textureDict[texture]);
             } else {
-              prevGenDict[vars[i]][texture] = genDict[texture];
+              prevGenDict[alpha][texture] = textureDict[texture];
             }
           } else {
-            prevGenDict[vars[i]] = {};
-            prevGenDict[vars[i]][texture] = genDict[texture];
+            prevGenDict[alpha] = {};
+            prevGenDict[alpha][texture] = textureDict[texture];
           }
         }
       }
@@ -338,39 +344,33 @@ class App extends Component {
   async sendData() {
     this.log('Sending data to TF serving endpoint');
 
-    const vars = alphas;
-    await Promise.all(
-      vars.map(alpha =>
-        fetch('/api/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        instances: [
+          {
+            input_real_img_bytes: { b64: this.state.b64 },
+            input_n_style: this.state.nSamples,
+            input_categories: this.state.textures.map(texture =>
+              texture.toLowerCase()
+            ),
           },
-          body: JSON.stringify({
-            instances: [
-              {
-                input_real_img_bytes: { b64: this.state.b64 },
-                input_n_style: this.state.nSamples,
-                input_do_gdwct: 1,
-                input_alpha: alpha,
-                input_categories: this.state.textures.map(texture =>
-                  texture.toLowerCase()
-                ),
-              },
-            ],
-          }),
-        }).then(function(data) {
-          return data.json();
-        })
-      )
-    )
+        ],
+      }),
+    })
+      .then(function(data) {
+        return data.json();
+      })
       .then(response => this.loadData(response, vars))
       .then(
         this.setState({
           progress: 60,
         })
-      )
-      .catch(err => alert(err));
+      );
+    // .catch(err => alert(err));
   }
 
   async generate() {
@@ -403,10 +403,16 @@ class App extends Component {
       });
     } else {
       const alpha = this.state.alpha;
+      const myList = this.state.myList;
+      const position = myList.map(tuple => tuple[0]).indexOf(e.target.src);
+
+      // logic so that list images that are not part of current grid can be clicked
       this.setState({
         currentImgSrc: e.target.src || nullImg,
         currentImgName: e.target.src
-          ? alpha + document.getElementById(e.target.src).parentNode.id
+          ? position < 0
+            ? alpha + document.getElementById(e.target.src).parentNode.id
+            : myList[position][1]
           : null,
         lastClicked: e.target.src,
       });
@@ -697,23 +703,18 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.showDict).map(
-          texture => (
-            (
-              <Button
-                className="unfocus"
-                value={texture}
-                onClick={this.filter}
-                style={{ padding: '5px' }}
-                positive={this.state.visible.indexOf(texture) >= 0}
-              >
-                {' '}
-                {texture}{' '}
-              </Button>
-            ),
-            (key = { texture })
-          )
-        )}
+        {Object.keys(this.state.showDict).map(texture => (
+          <Button
+            className="unfocus"
+            value={texture}
+            onClick={this.filter}
+            style={{ padding: '5px' }}
+            positive={this.state.visible.indexOf(texture) >= 0}
+          >
+            {' '}
+            {texture}{' '}
+          </Button>
+        ))}
       </div>
     );
   }
