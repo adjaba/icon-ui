@@ -164,16 +164,20 @@ class App extends Component {
     this.generateBlend = this.generateBlend.bind(this);
   }
 
-  // componentDidUpdate(prevProps, prevState) {
-  //   if (prevState['alpha'] === this.state.alpha){
-  //     return
-  //   }
-  //   this.generateBlend(this.state.alpha).then((showDict) =>
-  //     this.setState({
-  //       showDict: showDict,
-  //     })
-  //   );
-  // }
+  // will be called after generate button is clicked or alpha has changed
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevState['alpha'] !== this.state.alpha ||
+      (prevState['loading'] !== this.state.loading &&
+        this.state.loading === false)
+    ) {
+      this.generateBlend(this.state.alpha).then(showDict =>
+        this.setState({
+          showDict: showDict,
+        })
+      );
+    }
+  }
 
   loadData(jsonResponseList, vars) {
     this.log('Received TF data');
@@ -218,16 +222,24 @@ class App extends Component {
       // finalGenDict[vars[i]] = prevGenDict;
     });
 
-    this.generateBlend(this.state.alpha).then(showDict =>
-      this.setState({
-        genDict: prevGenDict,
-        loading: false,
-        progress: 100,
-        status: 'Finished',
-        visible: textureOptions.map(option => option.text),
-        showDict: showDict,
-      })
-    );
+    this.setState({
+      genDict: prevGenDict,
+      loading: false,
+      progress: 100,
+      status: 'Finished',
+      visible: textureOptions.map(option => option.text),
+    });
+
+    // this.generateBlend(this.state.alpha).then(showDict =>
+    //   this.setState({
+    //     genDict: prevGenDict,
+    //     loading: false,
+    //     progress: 100,
+    //     status: 'Finished',
+    //     visible: textureOptions.map(option => option.text),
+    //     showDict: showDict,
+    //   })
+    // );
   }
 
   onLoadImage(e, { value }) {
@@ -556,16 +568,16 @@ class App extends Component {
       //     ? await this.generateBlend(newAlpha)
       //     : genDict[0]
       //   : {},
-      this.generateBlend(newAlpha).then(showDict =>
-        this.setState({
-          alpha: newAlpha,
-          showDict: showDict,
-        })
-      );
-      // this.setState({
-      //   alpha: newAlpha,
-      // });
-      this.setShowdict(newAlpha);
+      // this.generateBlend(newAlpha).then(showDict =>
+      //   this.setState({
+      //     alpha: newAlpha,
+      //     showDict: showDict,
+      //   })
+      // );
+      this.setState({
+        alpha: newAlpha,
+      });
+      // this.setShowdict(newAlpha);
     }
   }
 
