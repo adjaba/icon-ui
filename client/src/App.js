@@ -697,18 +697,23 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.showDict).map(texture => (
-          <Button
-            className="unfocus"
-            value={texture}
-            onClick={this.filter}
-            style={{ padding: '5px' }}
-            positive={this.state.visible.indexOf(texture) >= 0}
-          >
-            {' '}
-            {texture}{' '}
-          </Button>
-        ))}
+        {Object.keys(this.state.showDict).map(
+          texture => (
+            (
+              <Button
+                className="unfocus"
+                value={texture}
+                onClick={this.filter}
+                style={{ padding: '5px' }}
+                positive={this.state.visible.indexOf(texture) >= 0}
+              >
+                {' '}
+                {texture}{' '}
+              </Button>
+            ),
+            (key = { texture })
+          )
+        )}
       </div>
     );
   }
@@ -801,7 +806,6 @@ class App extends Component {
                   disabled={this.state.loading}
                 />
               }
-              actionPosition="right"
               style={{
                 flex: 1,
                 maxHeight: '36px',
@@ -874,18 +878,6 @@ class App extends Component {
                 placeholder="Select texture/s"
                 disabled={this.state.loading}
               />
-              {/* <Header as="h4" style={{ marginTop: '10px' }}>
-                Alpha
-              </Header>
-              <Input
-                style={{ maxWidth: 100, marginBottom: 10 }}
-                type="number"
-                step="0.25"
-                max="2"
-                min="0"
-                onChange={e => this.setAlpha(e)}
-                disabled={this.state.loading}
-              /> */}
             </div>
             <div style={{ ...controlColumnStyle, marginBottom: '20px' }}>
               {/* <Header as="h4"> Style Transfer</Header>
