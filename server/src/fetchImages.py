@@ -8,10 +8,6 @@ import re
 
 app = Flask(__name__)
 
-# @app.route("/")
-# def home():
-#     return "Hello, World!"
-
 """
 Expected input: 
 {
@@ -28,23 +24,12 @@ def sanity():
 
     IP = "172.20.79.104"
     PORT = 8501
-    MODEL_NAME = "tsgan_gdwct"
+    MODEL_NAME = "tsgan_gdwct_v2"
 
     endpoint = "http://%s:%d/v1/models/%s:predict" % (IP, PORT, MODEL_NAME)
 
     r = requests.post(endpoint, data = json.dumps(content))
     return jsonify(r.text)
-
-# @app.route("/api/get", methods=['POST', 'OPTIONS'])
-# def fetch_image():
-#     content = request.json
-#     url = content['url']
-#     r = requests.get(url, stream=True, params=flask.request.args)
-#     response = flask.Response(flask.stream_with_context(r.iter_content()), content_type=r.headers['content-type'], status=r.status_code)
-#     response.headers['Access-Control-Allow-Origin'] = '*'
-#     print(url)
-#     print(response)
-#     return jsonify({'hi': 'hi'})
 
 """
 from https://github.com/runarfu/cors-proxy/master/server.py
@@ -65,11 +50,7 @@ def proxy(url):
     response = flask.Response(flask.stream_with_context(request.iter_content()), content_type=request.headers['content-type'], status=request.status_code)
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
-    
-
-# def get_url_as_base64(url):
-#     return base64.b64encode(requests.get(url).content)
 
 if __name__ == "__main__":
     # app.run(debug=True)
-    app.run(host='127.0.0.1', port= os.environ.get('PORT', 3001), debug=True)
+    app.run(host='0.0.0.0', port= os.environ.get('PORT', 3001), debug=True)
