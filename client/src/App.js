@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import {
   Button,
   Header,
@@ -59,16 +59,16 @@ const textureOptions = [
   },
 ];
 
-const styleOptions = [
-  {
-    value: 0,
-    text: 'No Style Transfer',
-  },
-  {
-    value: 1,
-    text: 'Game Style Transfer',
-  },
-];
+// const styleOptions = [
+//   {
+//     value: 0,
+//     text: 'No Style Transfer',
+//   },
+//   {
+//     value: 1,
+//     text: 'Game Style Transfer',
+//   },
+// ];
 
 const resizingOptions = [
   {
@@ -126,25 +126,24 @@ class App extends Component {
     this.state = {
       b64: null, //base64 of resized most recently submitted image
       loading: false, // is generation ongoing
-      currentImgSrc: null, // last clicked image source among grid and list
-      currentImgName: null,
+      currentImgSrc: null, // last clicked image source among grid and list for display
+      currentImgName: null, // name of last clicked image source among grid and list. Format alpha+category+index
       imgSrc: null, // image source for generation
-      myList: [], // contains images in side list
+      myList: [], // contains images in side list. Structure [[img1, name], [img2, name]]
       resize: false, // resize generated samples option
       mode: null, // image upload mode: url or file (hence can be toggled with during image generation)
       imgMode: null, // generating image type: url or file
-      inputSrc: null,
-      nSamples: null,
-      textures: [],
-      alpha: 0,
-      styleTransfer: 0,
-      genDict: {},
-      progress: 0,
-      keepHistory: false,
-      visible: textureOptions.map(option => option.text),
-      status: '',
-      lastClicked: null,
-      showDict: Object(),
+      inputSrc: null, // image source loaded from user through the load image button
+      nSamples: null, // number of samples per texture/ category selected by user
+      textures: [], // textures/categories selected by user for image translation
+      alpha: 0, // alpha value selected by user through slider for game style transfer
+      genDict: {}, // generated instances from tensorflow serving api. Structure {alpha:{texture:[pic1, pic2]}}
+      progress: 0, // progress bar
+      keepHistory: false, // keep history attribute selected by user
+      visible: textureOptions.map(option => option.text), // categories to be shown - toggled through show/hide buttons
+      status: '', // status to be displayed beside progress bar
+      lastClicked: null, // last selected image from list or grid (border for emphasis on select/unselect),
+      showDict: Object(), // pictures to be shown in grid. Structure {texture:[pic1, pic2]}
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -161,7 +160,7 @@ class App extends Component {
     this.sendData = this.sendData.bind(this);
     this.filter = this.filter.bind(this);
     this.setAlpha = this.setAlpha.bind(this);
-    this.generateBlend = this.generateBlend.bind(this);
+    this.generateShowDict = this.generateShowDict.bind(this);
   }
 
   // will be called after generate button is clicked or alpha has changed
@@ -171,7 +170,7 @@ class App extends Component {
       (prevState['loading'] !== this.state.loading &&
         this.state.loading === false)
     ) {
-      this.generateBlend(this.state.alpha).then(showDict =>
+      this.generateShowDict(this.state.alpha).then(showDict =>
         this.setState({
           showDict: showDict,
         })
@@ -186,7 +185,7 @@ class App extends Component {
     if (jsonResponseList.length !== vars.length) {
       throw new Error('I should not be here');
     }
-    // var finalGenDict = {};
+
     var textures = this.state.textures;
     var nSamples = this.state.nSamples;
     var prevGenDict = this.state.genDict;
@@ -219,7 +218,6 @@ class App extends Component {
           }
         }
       }
-      // finalGenDict[vars[i]] = prevGenDict;
     });
 
     this.setState({
@@ -229,17 +227,6 @@ class App extends Component {
       status: 'Finished',
       visible: textureOptions.map(option => option.text),
     });
-
-    // this.generateBlend(this.state.alpha).then(showDict =>
-    //   this.setState({
-    //     genDict: prevGenDict,
-    //     loading: false,
-    //     progress: 100,
-    //     status: 'Finished',
-    //     visible: textureOptions.map(option => option.text),
-    //     showDict: showDict,
-    //   })
-    // );
   }
 
   onLoadImage(e, { value }) {
@@ -278,9 +265,7 @@ class App extends Component {
     this.log('Resizing and converting input image');
 
     var url;
-    console.log(this.state.imgMode);
     if (this.state.imgMode === fileInputs.properties[fileInputs.URL].name) {
-      console.log('sending a proxy');
       url = '/api/proxy/' + this.state.imgSrc;
     } else if (
       this.state.imgMode === fileInputs.properties[fileInputs.image].name
@@ -340,7 +325,6 @@ class App extends Component {
     if (
       !(this.state.nSamples && this.state.textures.length && this.state.imgSrc)
     ) {
-      // alert ('Enter all required parameters: number of samples, textures')
       throw new Error(
         'Enter all required parameters: input image, number of samples and textures'
       );
@@ -353,10 +337,9 @@ class App extends Component {
 
   async sendData() {
     this.log('Sending data to TF serving endpoint');
-    const b64 = this.state.b64;
 
     const vars = alphas;
-    const resp = await Promise.all(
+    await Promise.all(
       vars.map(alpha =>
         fetch('/api/generate', {
           method: 'POST',
@@ -420,7 +403,6 @@ class App extends Component {
       });
     } else {
       const alpha = this.state.alpha;
-      console.log(e.target.src);
       this.setState({
         currentImgSrc: e.target.src || nullImg,
         currentImgName: e.target.src
@@ -432,8 +414,6 @@ class App extends Component {
   }
 
   onImageError(e) {
-    // TODO: add links between target.src and imgSrc?
-    // Use case: what happens when invalid URL is entered after valid URL, is previous URL erased?
     e.target.src = nullImg;
     alert('Invalid input; please enter a valid image URL or file');
   }
@@ -503,12 +483,10 @@ class App extends Component {
         zip.file(filename, data, { binary: true });
         count++;
 
-        if (count == myList.length) {
-          var zipFile = zip
-            .generateAsync({ type: 'blob' })
-            .then(function(content) {
-              saveAs(content, zipFilename);
-            });
+        if (count === myList.length) {
+          zip.generateAsync({ type: 'blob' }).then(function(content) {
+            saveAs(content, zipFilename);
+          });
         }
       });
     });
@@ -537,8 +515,8 @@ class App extends Component {
         'Number of Samples entered out of bounds (1 - 25). Please reenter.'
       );
       e.target.value = this.state.nSamples;
-      // throw new Error('Number of Samples entered out of bounds (1 - 25)');
     } else {
+      // note != is intentional here. e.target.value is a string and parseInt(e.target.value) is a number
       if (e.target.value != parseInt(e.target.value)) {
         alert('Please input a whole number');
         e.target.value = parseInt(e.target.value);
@@ -562,35 +540,13 @@ class App extends Component {
     } else {
       const newAlpha = parseFloat(value / 100);
 
-      // showDict:
-      //   isNotEmpty
-      //   ? isStyleTransfer
-      //     ? await this.generateBlend(newAlpha)
-      //     : genDict[0]
-      //   : {},
-      // this.generateBlend(newAlpha).then(showDict =>
-      //   this.setState({
-      //     alpha: newAlpha,
-      //     showDict: showDict,
-      //   })
-      // );
       this.setState({
         alpha: newAlpha,
       });
-      // this.setShowdict(newAlpha);
     }
   }
 
-  setShowdict(newAlpha) {
-    this.generateBlend(newAlpha).then(showDict =>
-      this.setState({
-        showDict: showDict,
-      })
-    );
-  }
-
-  async generateBlend(newAlpha) {
-    console.log('generating blend');
+  async generateShowDict(newAlpha) {
     function loadImage(url) {
       return new Promise((fulfill, reject) => {
         let imageObj = new Image();
@@ -609,7 +565,6 @@ class App extends Component {
       showDict = genDict[0];
       return genDict[0];
     } else if (newAlpha in genDict) {
-      console.log('hi im returning from gendict');
       showDict = genDict[newAlpha];
       return genDict[newAlpha];
     } else if (newAlpha < 1) {
@@ -700,23 +655,20 @@ class App extends Component {
   }
   inputChange(e) {
     if (e.target.value) {
-      if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
-        console.log('loaded image', e.target.value);
+      if (this.state.mode === fileInputs.properties[fileInputs.URL].name) {
         this.setState({
           inputSrc: e.target.value,
         });
       } else if (
-        this.state.mode == fileInputs.properties[fileInputs.image].name
+        this.state.mode === fileInputs.properties[fileInputs.image].name
       ) {
-        console.log('loaded image', e.target.value);
         this.setState({
           inputSrc: URL.createObjectURL(e.target.files[0]),
         });
       } else {
-        console.log('why am i here?');
+        throw new Error('Misconfigured state');
       }
     } else {
-      console.log('nice try');
     }
   }
 
@@ -740,7 +692,7 @@ class App extends Component {
       <div style={{ display: 'flex', flexDirection: 'row' }}>
         <Header
           as="h5"
-          fluid
+          fluid="true"
           style={{ margin: '0px', padding: '0px', marginRight: '5px' }}
         >
           Show/Hide{' '}
@@ -811,6 +763,7 @@ class App extends Component {
               onError={this.onImageError}
               style={stretchStyle}
               src={this.state.imgSrc || nullImg}
+              alt="load fail"
             />
           </div>
           <Button
@@ -865,7 +818,7 @@ class App extends Component {
               disabled={!this.state.mode || this.state.loading}
               onChange={e => this.inputChange(e)}
               accept={
-                this.state.mode == fileInputs.properties[2].name
+                this.state.mode === fileInputs.properties[2].name
                   ? fileInputs.properties[2].accept
                   : '*'
               }
@@ -1015,7 +968,12 @@ class App extends Component {
         }}
         onClick={e => this.onImageClick(e)}
       >
-        <img style={stretchStyle} src={urlName[0]} key={urlName[0]} />
+        <img
+          style={stretchStyle}
+          src={urlName[0]}
+          key={urlName[0]}
+          alt="load fail"
+        />
       </div>
     ));
   }
@@ -1047,17 +1005,7 @@ class App extends Component {
 
   renderGridItems() {
     const alpha = this.state.alpha;
-    const genDict = this.state.genDict;
-    const isNotEmpty = Object.keys(genDict).length > 0;
-    const isStyleTransfer = Object.keys(genDict).length > 1;
-    // const showDict=
-    //     isNotEmpty
-    //     ? isStyleTransfer
-    //       ? this.generateBlend(alpha)
-    //       : genDict[0]
-    //     : {};
 
-    console.log('rendering', this.state.showDict);
     return Object.keys(this.state.showDict).map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
@@ -1098,6 +1046,7 @@ class App extends Component {
             <img
               style={stretchStyle}
               src={this.state.currentImgSrc || nullImg}
+              alt="load fail"
             />
           </div>
           <div style={{ display: 'flex' }}>
