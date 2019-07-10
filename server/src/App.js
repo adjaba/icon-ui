@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import {
   Button,
   Header,
@@ -59,16 +59,16 @@ const textureOptions = [
   },
 ];
 
-const styleOptions = [
-  {
-    value: 0,
-    text: 'No Style Transfer',
-  },
-  {
-    value: 1,
-    text: 'Game Style Transfer',
-  },
-];
+// const styleOptions = [
+//   {
+//     value: 0,
+//     text: 'No Style Transfer',
+//   },
+//   {
+//     value: 1,
+//     text: 'Game Style Transfer',
+//   },
+// ];
 
 const resizingOptions = [
   {
@@ -94,6 +94,7 @@ const controlColumnStyle = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  padding: '5px',
 };
 
 const nullImg = require('./images/null.JPG');
@@ -117,34 +118,32 @@ var fileInputs = {
   },
 };
 
-const IP = '172.20.79.104';
-const PORT = 8501;
-const MODEL_NAME = 'tsgan_gdwct';
-const endpoint =
-  'http://' + IP + ':' + PORT + '/v1/models/' + MODEL_NAME + ':predict';
+const alphas = [0.0, 1.0, 2.0];
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       b64: null, //base64 of resized most recently submitted image
       loading: false, // is generation ongoing
-      currentImgSrc: null, // last clicked image source among grid and list
+      currentImgSrc: null, // last clicked image source among grid and list for display
+      currentImgName: null, // name of last clicked image source among grid and list. Format alpha+category+index
       imgSrc: null, // image source for generation
-      myList: [], // contains images in side list
+      myList: [], // contains images in side list. Structure [[img1, name], [img2, name]]
       resize: false, // resize generated samples option
       mode: null, // image upload mode: url or file (hence can be toggled with during image generation)
       imgMode: null, // generating image type: url or file
-      inputSrc: null,
-      nSamples: null,
-      textures: [],
-      alpha: 1.0,
-      styleTransfer: 0,
-      genDict: {},
-      progress: 0,
-      keepHistory: false,
-      visible: textureOptions.map(option => option.text),
-      status: '',
-      lastClicked: null,
+      inputSrc: null, // image source loaded from user through the load image button
+      nSamples: null, // number of samples per texture/ category selected by user
+      textures: [], // textures/categories selected by user for image translation
+      alpha: 0, // alpha value selected by user through slider for game style transfer
+      genDict: {}, // generated instances from tensorflow serving api. Structure {alpha:{texture:[pic1, pic2]}}
+      progress: 0, // progress bar
+      keepHistory: false, // keep history attribute selected by user
+      visible: textureOptions.map(option => option.text), // categories to be shown - toggled through show/hide buttons
+      status: '', // status to be displayed beside progress bar
+      lastClicked: null, // last selected image from list or grid (border for emphasis on select/unselect),
+      showDict: Object(), // pictures to be shown in grid. Structure {texture:[pic1, pic2]}
     };
 
     this.onLoadImage = this.onLoadImage.bind(this);
@@ -161,33 +160,65 @@ class App extends Component {
     this.sendData = this.sendData.bind(this);
     this.filter = this.filter.bind(this);
     this.setAlpha = this.setAlpha.bind(this);
+    this.generateShowDict = this.generateShowDict.bind(this);
   }
 
-  loadData(jsonResponse) {
+  // will be called after generate button is clicked or alpha has changed
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevState['alpha'] !== this.state.alpha ||
+      (prevState['loading'] !== this.state.loading &&
+        this.state.loading === false)
+    ) {
+      this.generateShowDict(this.state.alpha).then(showDict =>
+        this.setState({
+          showDict: showDict,
+        })
+      );
+    }
+  }
+
+  loadData(jsonResponseList, vars) {
     this.log('Received TF data');
     this.log('Loading received images');
-    var obj = JSON.parse(jsonResponse);
-    var data = obj['predictions'].map(
-      prediction =>
-        'data:image/png;base64,' +
-        prediction.replace(/-/g, '+').replace(/_/g, '/')
-    );
-    var genDict = {};
-    for (const texture of this.state.textures) {
-      var splice = data.splice(0, this.state.nSamples);
-      genDict[texture] = splice;
+
+    if (jsonResponseList.length !== vars.length) {
+      throw new Error('I should not be here');
     }
 
+    var textures = this.state.textures;
+    var nSamples = this.state.nSamples;
     var prevGenDict = this.state.genDict;
-    if (Object.keys(prevGenDict)) {
-      for (const texture of Object.keys(genDict)) {
-        if (prevGenDict[texture]) {
-          prevGenDict[texture].push(...genDict[texture]);
-        } else {
-          prevGenDict[texture] = genDict[texture];
+
+    jsonResponseList.forEach(function(jsonResponse, i) {
+      var obj = JSON.parse(jsonResponse);
+      var data = obj['predictions'].map(
+        prediction =>
+          'data:image/png;base64,' +
+          prediction.replace(/-/g, '+').replace(/_/g, '/')
+      );
+      var genDict = {};
+
+      for (const texture of textures) {
+        var splice = data.splice(0, nSamples);
+        genDict[texture] = splice;
+      }
+
+      if (Object.keys(prevGenDict)) {
+        for (const texture of Object.keys(genDict)) {
+          if (prevGenDict[vars[i]]) {
+            if (texture in prevGenDict[vars[i]]) {
+              prevGenDict[vars[i]][texture].push(...genDict[texture]);
+            } else {
+              prevGenDict[vars[i]][texture] = genDict[texture];
+            }
+          } else {
+            prevGenDict[vars[i]] = {};
+            prevGenDict[vars[i]][texture] = genDict[texture];
+          }
         }
       }
-    }
+    });
 
     this.setState({
       genDict: prevGenDict,
@@ -234,9 +265,7 @@ class App extends Component {
     this.log('Resizing and converting input image');
 
     var url;
-    console.log(this.state.imgMode);
     if (this.state.imgMode === fileInputs.properties[fileInputs.URL].name) {
-      console.log('sending a proxy');
       url = '/api/proxy/' + this.state.imgSrc;
     } else if (
       this.state.imgMode === fileInputs.properties[fileInputs.image].name
@@ -254,7 +283,9 @@ class App extends Component {
       canvas.width = width;
       canvas.height = height;
       canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-      var data = canvas.toDataURL().substring('data:image/png;base64,'.length);
+      var data = canvas
+        .toDataURL('image/jpeg', 1.0)
+        .substring('data:image/jpeg;base64,'.length);
       this.setState({
         b64: data,
         progress: 40,
@@ -292,16 +323,10 @@ class App extends Component {
 
   formValidation() {
     if (
-      !(
-        this.state.nSamples &&
-        this.state.textures.length &&
-        this.state.imgSrc &&
-        this.state.alpha
-      )
+      !(this.state.nSamples && this.state.textures.length && this.state.imgSrc)
     ) {
-      // alert ('Enter all required parameters: number of samples, textures, and alpha.')
       throw new Error(
-        'Enter all required parameters: number of samples, textures, and alpha.'
+        'Enter all required parameters: input image, number of samples and textures'
       );
     } else if (parseFloat(this.state.alpha) < 0) {
       throw new Error('Below minimum alpha (0.0)');
@@ -312,31 +337,34 @@ class App extends Component {
 
   async sendData() {
     this.log('Sending data to TF serving endpoint');
-    const b64 = this.state.b64;
 
-    const resp = await fetch('/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        instances: [
-          {
-            input_real_img_bytes: { b64: this.state.b64 },
-            input_n_style: this.state.nSamples,
-            input_do_gdwct: this.state.styleTransfer,
-            input_alpha: parseFloat(this.state.alpha),
-            input_categories: this.state.textures.map(texture =>
-              texture.toLowerCase()
-            ),
+    const vars = alphas;
+    await Promise.all(
+      vars.map(alpha =>
+        fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ],
-      }),
-    })
-      .then(function(data) {
-        return data.json();
-      })
-      .then(response => this.loadData(response))
+          body: JSON.stringify({
+            instances: [
+              {
+                input_real_img_bytes: { b64: this.state.b64 },
+                input_n_style: this.state.nSamples,
+                input_do_gdwct: 1,
+                input_alpha: alpha,
+                input_categories: this.state.textures.map(texture =>
+                  texture.toLowerCase()
+                ),
+              },
+            ],
+          }),
+        }).then(function(data) {
+          return data.json();
+        })
+      )
+    )
+      .then(response => this.loadData(response, vars))
       .then(
         this.setState({
           progress: 60,
@@ -358,6 +386,7 @@ class App extends Component {
         loading: true,
         myList: [],
         currentImgSrc: '',
+        currentImgName: null,
         status: '',
       });
     }
@@ -368,20 +397,23 @@ class App extends Component {
   onImageClick(e) {
     if (e.target.src === this.state.lastClicked) {
       this.setState({
-        currentImgSrc: nullImg,
+        currentImgSrc: null,
+        currentImgName: null,
         lastClicked: '',
       });
     } else {
+      const alpha = this.state.alpha;
       this.setState({
         currentImgSrc: e.target.src || nullImg,
+        currentImgName: e.target.src
+          ? alpha + document.getElementById(e.target.src).parentNode.id
+          : null,
         lastClicked: e.target.src,
       });
     }
   }
 
   onImageError(e) {
-    // TODO: add links between target.src and imgSrc?
-    // Use case: what happens when invalid URL is entered after valid URL, is previous URL erased?
     e.target.src = nullImg;
     alert('Invalid input; please enter a valid image URL or file');
   }
@@ -389,15 +421,16 @@ class App extends Component {
   addToList() {
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const currentImgName = this.state.currentImgName;
+    const position = myList.map(tuple => tuple[0]).indexOf(currentImgSrc);
 
-    if (!currentImgSrc) {
+    if (!currentImgSrc || currentImgSrc === nullImg) {
       alert('No image selected');
       return;
     }
 
     if (position < 0) {
-      myList.push(currentImgSrc);
+      myList.push([currentImgSrc, currentImgName]);
       this.setState({
         myList: myList,
       });
@@ -409,7 +442,7 @@ class App extends Component {
   removeFromList() {
     const myList = this.state.myList;
     const currentImgSrc = this.state.currentImgSrc;
-    const position = myList.indexOf(currentImgSrc);
+    const position = myList.map(tuple => tuple[0]).indexOf(currentImgSrc);
 
     if (position < 0) {
       alert('Image not in list');
@@ -430,8 +463,8 @@ class App extends Component {
   saveList() {
     const myList = this.state.myList.map((url, i, arr) => {
       return {
-        download: url,
-        filename: document.getElementById(url).parentNode.id,
+        download: url[0],
+        filename: url[1],
       };
     });
 
@@ -450,12 +483,10 @@ class App extends Component {
         zip.file(filename, data, { binary: true });
         count++;
 
-        if (count == myList.length) {
-          var zipFile = zip
-            .generateAsync({ type: 'blob' })
-            .then(function(content) {
-              saveAs(content, zipFilename);
-            });
+        if (count === myList.length) {
+          zip.generateAsync({ type: 'blob' }).then(function(content) {
+            saveAs(content, zipFilename);
+          });
         }
       });
     });
@@ -484,8 +515,8 @@ class App extends Component {
         'Number of Samples entered out of bounds (1 - 25). Please reenter.'
       );
       e.target.value = this.state.nSamples;
-      // throw new Error('Number of Samples entered out of bounds (1 - 25)');
     } else {
+      // note != is intentional here. e.target.value is a string and parseInt(e.target.value) is a number
       if (e.target.value != parseInt(e.target.value)) {
         alert('Please input a whole number');
         e.target.value = parseInt(e.target.value);
@@ -497,44 +528,147 @@ class App extends Component {
     }
   }
 
-  setAlpha(value) {
-    console.log(value);
+  async setAlpha(value) {
     const alpha = value;
     if (!alpha) {
       this.setState({
-        alpha: 0,
+        alpha: 0.0,
       });
-    } else if (alpha >= 200 || alpha <= 0) {
-      alert(
-        'Number of Samples entered out of bounds (0.05 - 1.95). Please reenter.'
-      );
+    } else if (alpha > 200 || alpha < 0) {
+      alert('Alpha entered out of bounds (0.0 - 2.0). Please reenter.');
       value = this.state.alpha;
     } else {
+      const newAlpha = parseFloat(value / 100);
+
       this.setState({
-        alpha: parseFloat(value / 100).toString(),
+        alpha: newAlpha,
       });
     }
   }
 
+  async generateShowDict(newAlpha) {
+    function loadImage(url) {
+      return new Promise((fulfill, reject) => {
+        let imageObj = new Image();
+        imageObj.onload = () => fulfill(imageObj);
+        imageObj.src = url;
+      });
+    }
+
+    const genDict = this.state.genDict;
+    var showDict = {};
+
+    if (genDict.length === 0) {
+      showDict = {};
+      return {};
+    } else if (Object.keys(genDict).length === 1) {
+      showDict = genDict[0];
+      return genDict[0];
+    } else if (newAlpha in genDict) {
+      showDict = genDict[newAlpha];
+      return genDict[newAlpha];
+    } else if (newAlpha < 1) {
+      if (!(0 in genDict && 1 in genDict)) {
+        return {};
+      }
+      const blend1 = genDict[0.0];
+      const blend2 = genDict[1.0];
+
+      //sanity check
+      if (Object.keys(blend1).length !== Object.keys(blend2).length) {
+        throw new Error(
+          'Sanity check fail: genDict values for vars not of equal length'
+        );
+      }
+
+      const list2 = Object.keys(blend1).map(function(texture) {
+        const list = blend1[texture].map((img1, index) => {
+          var canvas = document.createElement('CANVAS');
+          canvas.width = img1.width;
+          canvas.height = img1.height;
+          var ctx = canvas.getContext('2d');
+
+          return Promise.all([
+            loadImage(img1),
+            loadImage(blend2[texture][index]),
+          ]).then(images => {
+            ctx.globalAlpha = 1 - newAlpha;
+            canvas.width = images[1].width;
+            canvas.height = images[1].height;
+            ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = newAlpha;
+            ctx.drawImage(images[1], 0, 0, canvas.width, canvas.height);
+            var data = canvas.toDataURL();
+            return data;
+          });
+        });
+        return Promise.all(list).then(function(list) {
+          showDict[texture] = list;
+        });
+      });
+      return Promise.all(list2).then(function(list) {
+        return showDict;
+      });
+    } else {
+      if (!(1 in genDict && 2 in genDict)) {
+        return {};
+      }
+      const blend1 = genDict[1.0];
+      const blend2 = genDict[2.0];
+
+      //sanity check
+      if (Object.keys(blend1).length !== Object.keys(blend2).length) {
+        throw new Error(
+          'Sanity check fail: genDict values for vars not of equal length'
+        );
+      }
+
+      const list2 = Object.keys(blend1).map(function(texture) {
+        const list = blend1[texture].map((img1, index) => {
+          var canvas = document.createElement('CANVAS');
+          canvas.width = img1.width;
+          canvas.height = img1.height;
+          var ctx = canvas.getContext('2d');
+
+          return Promise.all([
+            loadImage(img1),
+            loadImage(blend2[texture][index]),
+          ]).then(images => {
+            ctx.globalAlpha = 2 - newAlpha;
+            canvas.width = images[1].width;
+            canvas.height = images[1].height;
+            ctx.drawImage(images[0], 0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = newAlpha - 1;
+            ctx.drawImage(images[1], 0, 0, canvas.width, canvas.height);
+            var data = canvas.toDataURL();
+            return data;
+          });
+        });
+        return Promise.all(list).then(function(list) {
+          showDict[texture] = list;
+        });
+      });
+      return Promise.all(list2).then(function(list) {
+        return showDict;
+      });
+    }
+  }
   inputChange(e) {
     if (e.target.value) {
-      if (this.state.mode == fileInputs.properties[fileInputs.URL].name) {
-        console.log('loaded image', e.target.value);
+      if (this.state.mode === fileInputs.properties[fileInputs.URL].name) {
         this.setState({
           inputSrc: e.target.value,
         });
       } else if (
-        this.state.mode == fileInputs.properties[fileInputs.image].name
+        this.state.mode === fileInputs.properties[fileInputs.image].name
       ) {
-        console.log('loaded image', e.target.value);
         this.setState({
           inputSrc: URL.createObjectURL(e.target.files[0]),
         });
       } else {
-        console.log('why am i here?');
+        throw new Error('Misconfigured state');
       }
     } else {
-      console.log('nice try');
     }
   }
 
@@ -558,23 +692,28 @@ class App extends Component {
       <div style={{ display: 'flex', flexDirection: 'row' }}>
         <Header
           as="h5"
-          fluid
+          fluid="true"
           style={{ margin: '0px', padding: '0px', marginRight: '5px' }}
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.genDict).map(texture => (
-          <Button
-            className="unfocus"
-            value={texture}
-            onClick={this.filter}
-            style={{ padding: '5px' }}
-            positive={this.state.visible.indexOf(texture) >= 0}
-          >
-            {' '}
-            {texture}{' '}
-          </Button>
-        ))}
+        {Object.keys(this.state.showDict).map(
+          texture => (
+            (
+              <Button
+                className="unfocus"
+                value={texture}
+                onClick={this.filter}
+                style={{ padding: '5px' }}
+                positive={this.state.visible.indexOf(texture) >= 0}
+              >
+                {' '}
+                {texture}{' '}
+              </Button>
+            ),
+            (key = { texture })
+          )
+        )}
       </div>
     );
   }
@@ -585,15 +724,16 @@ class App extends Component {
         <div
           style={{
             flex: '0 0 auto',
-            width: 191.8,
+            width: 250,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-around',
+            alignItems: 'stretch',
           }}
         >
           <Button.Group
             size="small"
-            style={{ margin: '10px 10px', maxHeight: '50px', flex: 0 }}
+            style={{ margin: '10px 5px', maxHeight: '50px', flex: 0 }}
           >
             <Button
               onClick={() => {
@@ -623,17 +763,18 @@ class App extends Component {
               Disk
             </Button>
           </Button.Group>
-          <div style={{ height: 191.8, width: 191.8, padding: 10 }}>
+          <div style={{ height: 250, width: 250, padding: 10 }}>
             <img
               onError={this.onImageError}
               style={stretchStyle}
               src={this.state.imgSrc || nullImg}
+              alt="load fail"
             />
           </div>
           <Button
             type="submit"
             primary
-            style={{ margin: '5px 10px', maxHeight: '50px', flex: 1 }}
+            style={{ margin: '5px', maxHeight: '50px', flex: 1 }}
             onClick={this.generate}
             loading={this.state.loading}
             disabled={this.state.loading}
@@ -665,7 +806,6 @@ class App extends Component {
                   disabled={this.state.loading}
                 />
               }
-              actionPosition="right"
               style={{
                 flex: 1,
                 maxHeight: '36px',
@@ -682,7 +822,7 @@ class App extends Component {
               disabled={!this.state.mode || this.state.loading}
               onChange={e => this.inputChange(e)}
               accept={
-                this.state.mode == fileInputs.properties[2].name
+                this.state.mode === fileInputs.properties[2].name
                   ? fileInputs.properties[2].accept
                   : '*'
               }
@@ -701,7 +841,7 @@ class App extends Component {
                 flexGrow: 0,
                 flexShrink: 1,
                 flexBasis: 'auto',
-                width: '200px',
+                width: '145px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -738,40 +878,31 @@ class App extends Component {
                 placeholder="Select texture/s"
                 disabled={this.state.loading}
               />
-              {/* <Header as="h4" style={{ marginTop: '10px' }}>
-                Alpha
-              </Header>
-              <Input
-                style={{ maxWidth: 100, marginBottom: 10 }}
-                type="number"
-                step="0.25"
-                max="2"
-                min="0"
-                onChange={e => this.setAlpha(e)}
-                disabled={this.state.loading}
-              /> */}
             </div>
             <div style={{ ...controlColumnStyle, marginBottom: '20px' }}>
-              <Header as="h4"> Style Transfer</Header>
+              {/* <Header as="h4"> Style Transfer</Header>
               <Select
                 options={styleOptions}
                 defaultValue={0}
                 onChange={(e, { value }) =>
-                  this.setState({ styleTransfer: value })
+                  this.setState({
+                    styleTransfer: value,
+                    alpha: value ? 1.0 : 0,
+                  })
                 }
                 disabled={this.state.loading}
                 style={{ display: 'flex', flex: '1' }}
-              />
+              /> */}
               <Header as="h4"> Alpha: {this.state.alpha} </Header>
               <Slider
-                defaultValue={100}
+                defaultValue={0}
                 disabled={this.state.loading}
                 step={5}
-                min={5}
-                max={195}
+                min={0}
+                max={200}
                 onChange={this.setAlpha}
                 marks={sliderMarks}
-                style={{ display: 'flex', flex: '1' }}
+                style={{ display: 'flex', flex: '0 1 0' }}
               />
               {/* weird bug with rc-slider if step = 0.05 and max = 1.95 */}
             </div>
@@ -819,22 +950,27 @@ class App extends Component {
 
   renderListItems() {
     const size = 75;
-    return this.state.myList.map(url => (
+    return this.state.myList.map(urlName => (
       <div
         style={{
           width: size,
           height: size,
           padding: 5,
-          border: this.state.lastClicked === url ? 'solid 1px #ccc' : '',
+          border: this.state.lastClicked === urlName[0] ? 'solid 1px #ccc' : '',
         }}
         onClick={e => this.onImageClick(e)}
       >
-        <img style={stretchStyle} src={url} key={url} />
+        <img
+          style={stretchStyle}
+          src={urlName[0]}
+          key={urlName[0]}
+          alt="load fail"
+        />
       </div>
     ));
   }
 
-  renderCategory(list, key) {
+  renderCategory(list, key, alpha) {
     return list.map((url, index) => (
       <div
         style={{
@@ -860,7 +996,9 @@ class App extends Component {
   }
 
   renderGridItems() {
-    return Object.keys(this.state.genDict).map((key, index) => (
+    const alpha = this.state.alpha;
+
+    return Object.keys(this.state.showDict).map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
@@ -877,7 +1015,7 @@ class App extends Component {
           }}
         >
           {' '}
-          {this.renderCategory(this.state.genDict[key], key)}
+          {this.renderCategory(this.state.showDict[key], key, alpha)}
         </div>
       </div>
     ));
@@ -896,13 +1034,14 @@ class App extends Component {
             paddingBottom: 10,
           }}
         >
-          <div style={{ padding: 10, flex: '0 0 auto' }}>
+          <div style={{ padding: 10, flex: '0 0 auto', height: 250 }}>
             <img
               style={stretchStyle}
               src={this.state.currentImgSrc || nullImg}
+              alt="load fail"
             />
           </div>
-          <div style={{ display: 'flex', marginTop: 10 }}>
+          <div style={{ display: 'flex' }}>
             <Button
               style={{ flex: 1 }}
               onClick={() => {
@@ -963,6 +1102,7 @@ class App extends Component {
               flexWrap: 0,
               flexDirection: 'column',
               placeContent: 'start',
+              padding: 0,
             }}
           >
             {this.renderGridItems()}
