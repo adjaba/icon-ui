@@ -863,7 +863,7 @@ class App extends Component {
                 onChange={this.toggleHistory}
                 disabled={this.state.loading}
               />
-              <Checkbox label="Sort by color" />
+              <Checkbox label="Sort by color" disabled />
             </div>
             <div style={controlColumnStyle}>
               <Header as="h4" style={{ marginTop: '0px' }}>
@@ -913,12 +913,14 @@ class App extends Component {
                 <Checkbox
                   label="Apply alpha channel"
                   style={{ marginBottom: '10px' }}
+                  disabled
                 />
                 <Checkbox
                   label="Resize generated sample"
                   onChange={e => {
                     this.toggleResizeSelect(e);
                   }}
+                  disabled
                 />
               </div>
               <Select
