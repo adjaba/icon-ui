@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "windows": "concurrently \"cd client && yarn start\" \"cd server/src && py fetchImages.py\"",
-    "linux": "concurrently \"cd client && yarn start\" \"cd server/src && python fetchImages.py\""
+    "linux": "concurrently \"cd client && yarn start\" \"cd server/src && python fetchImages.py\"",
+    "linux2": "concurrently \"cd client && yarn start\" \"cd server/src && python3 fetchImages.py\""
   },
   "dependencies": {
     "@material-ui/core": "^4.1.1",
