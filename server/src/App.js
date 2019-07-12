@@ -703,18 +703,20 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.showDict).map(texture => (
-          <Button
-            className="unfocus"
-            value={texture}
-            onClick={this.filter}
-            style={{ padding: '5px' }}
-            positive={this.state.visible.indexOf(texture) >= 0}
-          >
-            {' '}
-            {texture}{' '}
-          </Button>
-        ))}
+        {Object.keys(this.state.showDict)
+          .sort()
+          .map(texture => (
+            <Button
+              className="unfocus"
+              value={texture}
+              onClick={this.filter}
+              style={{ padding: '5px' }}
+              positive={this.state.visible.indexOf(texture) >= 0}
+            >
+              {' '}
+              {texture}{' '}
+            </Button>
+          ))}
       </div>
     );
   }
@@ -1001,27 +1003,29 @@ class App extends Component {
   renderGridItems() {
     const alpha = this.state.alpha;
 
-    return Object.keys(this.state.showDict).map((key, index) => (
-      <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
-        <Header as="h4" style={{ textAlign: 'center' }}>
-          {key}
-        </Header>
-        <div
-          style={{
-            flex: 1,
-            ...gridStyle,
-            margin: 5,
-            padding: 5,
-            display: 'flex',
-            overflowY: 0,
-            borderBottom: 'solid 1px #ccc',
-          }}
-        >
-          {' '}
-          {this.renderCategory(this.state.showDict[key], key, alpha)}
+    return Object.keys(this.state.showDict)
+      .sort()
+      .map((key, index) => (
+        <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
+          <Header as="h4" style={{ textAlign: 'center' }}>
+            {key}
+          </Header>
+          <div
+            style={{
+              flex: 1,
+              ...gridStyle,
+              margin: 5,
+              padding: 5,
+              display: 'flex',
+              overflowY: 0,
+              borderBottom: 'solid 1px #ccc',
+            }}
+          >
+            {' '}
+            {this.renderCategory(this.state.showDict[key], key, alpha)}
+          </div>
         </div>
-      </div>
-    ));
+      ));
   }
 
   renderImages() {
