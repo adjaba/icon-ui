@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "windows": "concurrently \"cd server && yarn build\" \"cd server && py fetchImages.py\"",
-    "linux": "concurrently \"cd server && yarn build\" \"cd server && python fetchImages.py\""
+    "linux": "concurrently \"cd server && yarn build\" \"cd server && python fetchImages.py\"",
+    "linux2": "concurrently \"cd server && yarn build\" \"cd server && python3 fetchImages.py\""
   },
   "dependencies": {
     "bootstrap": "^3",
