@@ -703,7 +703,7 @@ class App extends Component {
         >
           Show/Hide{' '}
         </Header>
-        {Object.keys(this.state.showDict).map(texture => (
+        {Object.keys(this.state.showDict).sort().map(texture => (
           <Button
             className="unfocus"
             value={texture}
@@ -1001,7 +1001,7 @@ class App extends Component {
   renderGridItems() {
     const alpha = this.state.alpha;
 
-    return Object.keys(this.state.showDict).map((key, index) => (
+    return Object.keys(this.state.showDict).sort().map((key, index) => (
       <div id={key} hidden={this.state.visible.indexOf(key) < 0}>
         <Header as="h4" style={{ textAlign: 'center' }}>
           {key}
