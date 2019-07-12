@@ -2,6 +2,6 @@ version: "3.3"
 services:
   server:
     build: .
-    image: moono/icon-ui:latest
+    image: moono/icon-ui-v2:latest
     ports:
-      - "35001:3000"
+      - "35011:3000"
