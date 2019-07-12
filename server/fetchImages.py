@@ -34,7 +34,7 @@ def sanity():
 
     IP = "172.20.79.104"
     PORT = 8501
-    MODEL_NAME = "tsgan_gdwct"
+    MODEL_NAME = "tsgan_gdwct_v2"
 
     endpoint = "http://%s:%d/v1/models/%s:predict" % (IP, PORT, MODEL_NAME)
 
