@@ -4,6 +4,21 @@ A front-end for Icon UI image translation and game style transfer models.
 
 ## Development
 
+### Installation - Master
+
+Install node.js (>= 10.x) and yarn. Then install the node modules:
+
+```bash
+cd client
+yarn install
+cd ../server
+yarn install
+cd ..
+yarn install
+```
+
+### Installation - Unified
+
 Install node.js (>= 10.x) and yarn. Then install the node modules:
 
 ```bash
@@ -12,6 +27,8 @@ yarn install
 cd ..
 yarn install
 ```
+
+### Launching the app - Master and Unified
 
 Run the development mode ([OS] = windows for Windows OS and linux for Linux/Ubuntu):
 
