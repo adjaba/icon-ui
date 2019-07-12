@@ -4,4 +4,4 @@ services:
     build: .
     image: moono/icon-ui-v2:latest
     ports:
-      - "35011:3000"
+      - "35001:3000"
