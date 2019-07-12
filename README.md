@@ -11,8 +11,6 @@ Install node.js (>= 10.x) and yarn. Then install the node modules:
 ```bash
 cd client
 yarn install
-cd ../server
-yarn install
 cd ..
 yarn install
 ```
