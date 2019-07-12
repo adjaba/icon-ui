@@ -1,18 +1,23 @@
+#!/usr/bin/env python
+
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 import flask
 import base64
 import requests
 import json
 import re
 
-app = Flask(__name__, template_folder='public')
+app = Flask(__name__, template_folder='build', static_folder='build/static')
 app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
 @app.route("/")
 def home():
     return render_template('index.html')
 
+@app.route('/<path:path>')
+def redirectToHome(path):
+    return redirect(url_for("home"))
 """
 Expected input: 
 {
@@ -73,4 +78,5 @@ def proxy(url):
 
 if __name__ == "__main__":
     # app.run(debug=True)
-    app.run(host='127.0.0.1', port= os.environ.get('PORT', 3000), debug=True)
+    # app.run(host='127.0.0.1', port= os.environ.get('PORT', 3000), debug=True)
+    app.run(host='0.0.0.0', port=os.environ.get('PORT', 3000), debug=False)
