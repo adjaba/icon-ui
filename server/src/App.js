@@ -138,7 +138,7 @@ class App extends Component {
       mode: null, // image upload mode: url or file (hence can be toggled with during image generation)
       imgMode: null, // generating image type: url or file
       inputSrc: null, // image source loaded from user through the load image button
-      nSamples: null, // number of samples per texture/ category selected by user
+      nSamples: 5, // number of samples per texture/ category selected by user
       textures: [], // textures/categories selected by user for image translation
       alpha: 0, // alpha value selected by user through slider for game style transfer
       genDict: {}, // generated instances from tensorflow serving api. Structure {alpha:{texture:[pic1, pic2]}}
@@ -856,6 +856,7 @@ class App extends Component {
                 type="number"
                 max="25"
                 min="1"
+                defaultValue="5"
                 onChange={e => this.setNSamples(e)}
                 disabled={this.state.loading}
               />
@@ -896,7 +897,7 @@ class App extends Component {
                 disabled={this.state.loading}
                 style={{ display: 'flex', flex: '1' }}
               /> */}
-              <Header as="h4"> Alpha: {this.state.alpha} </Header>
+              <Header as="h4"> Game Style: {this.state.alpha} </Header>
               <Slider
                 defaultValue={0}
                 disabled={this.state.loading}
