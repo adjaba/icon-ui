@@ -574,7 +574,6 @@ class App extends Component {
       showDict = genDict[0];
       return genDict[0];
     } else if (newAlpha in genDict) {
-      console.log('returning from genDict' + newAlpha);
       showDict = genDict[newAlpha];
       return genDict[newAlpha];
     } else if (newAlpha < 1) {
@@ -1007,7 +1006,7 @@ class App extends Component {
 
   renderGridItems() {
     const alpha = this.state.alpha;
-    console.log('rendering ' + alpha);
+
     return Object.keys(this.state.showDict)
       .sort()
       .map((key, index) => (
