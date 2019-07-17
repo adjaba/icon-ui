@@ -169,16 +169,19 @@ class App extends Component {
 
   // will be called after generate button is clicked or alpha has changed
   componentDidUpdate(prevProps, prevState) {
+    const alpha = this.state.alpha;
     if (
-      prevState['alpha'] !== this.state.alpha ||
+      prevState['alpha'] !== alpha ||
       (prevState['loading'] !== this.state.loading &&
         this.state.loading === false)
     ) {
-      this.generateShowDict(this.state.alpha).then(showDict =>
-        this.setState({
-          showDict: showDict,
-        })
-      );
+      this.generateShowDict(alpha).then(showDict => {
+        if (alpha === this.state.alpha) {
+          this.setState({
+            showDict: showDict,
+          });
+        }
+      });
     }
   }
 
