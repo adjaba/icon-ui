@@ -1034,7 +1034,15 @@ class App extends Component {
 
   renderImages() {
     return (
-      <div style={{ display: 'flex', flexDirection: 'row', height: '100%' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          minHeight: '427px',
+          maxHeight: 'calc(100vh - 350px)',
+          height: '100%',
+        }}
+      >
         <div
           style={{
             flex: '0 0 auto',
@@ -1043,6 +1051,7 @@ class App extends Component {
             flexDirection: 'column',
             height: '100%',
             paddingBottom: 10,
+            overflowY: 'auto',
           }}
         >
           <div style={{ padding: 10, flex: '0 0 auto', height: 250 }}>
@@ -1097,6 +1106,8 @@ class App extends Component {
             flexDirection: 'column',
             flex: 1,
             margin: '10px',
+            paddingBottom: '20px',
+            height: '100%',
           }}
         >
           <Segment compact attached="top" style={{ padding: '0.5em 1em' }}>
@@ -1135,7 +1146,7 @@ class App extends Component {
         }}
       >
         <div style={{ flex: '0 0 auto' }}>{this.renderControls()}</div>
-        <div style={{ flex: 1, minHeight: 0 }}>{this.renderImages()}</div>
+        <div style={{ flex: 1 }}>{this.renderImages()}</div>
       </div>
     );
   }
