@@ -4,6 +4,10 @@ A front-end for Icon UI image translation and game style transfer models.
 
 ## Development
 
+Master - React front-end and Flask back-end as two separate servers. Faster launching and instant refresh upon code changes - recommended for development purposes.
+
+Unified - React front-end and Flask back-end as one server. For deployment purposes.
+
 ### Installation - Master
 
 Install node.js (>= 10.x) and yarn. Then install the node modules / Python dependencies:
